@@ -6,6 +6,12 @@ There is no code yet. This is intentional.
 Code written without architectural conviction becomes technical debt on day one.
 The first goal is conviction — shared, tested, argued over.
 
+Orientation: [docs/START-HERE.md](docs/START-HERE.md) maps the knowledge base.
+The normative specifications live in [docs/specs/](docs/specs/); technology
+choices are recorded in [docs/decisions/](docs/decisions/) — including how to
+propose a new decision. Documentation conventions (one fact in one place,
+frontmatter, claims-as-targets) are at the bottom of START-HERE.
+
 ---
 
 ## What we need most right now
