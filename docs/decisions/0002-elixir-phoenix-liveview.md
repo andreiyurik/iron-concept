@@ -34,11 +34,17 @@ event plumbing. React appears only inside the design-time SVG editor
 
 ## Trade-offs
 
-Elixir is a niche hire; LiveView keeps per-client state on the server (memory
-scales with connected operators — fine for plants, wrong for consumer scale);
-operator screens depend on server availability — mitigated by the edge agent's
-local fallback page ([specs/edge-agent.md](../specs/edge-agent.md)) and HA
-deployment ([specs/deployment.md](../specs/deployment.md)).
+Elixir is a niche hire — the single largest strategic risk in the stack. Two
+deliberate mitigations: the public extension surface does not require Elixir
+([ADR 0008](0008-extensions-beyond-elixir.md) — WASM plugins and NATS
+satellites in any language, Elixir internals private), and the
+GenServer-per-tag scaling hypothesis is retired by a published benchmark in
+Phase 1, not assumed ([roadmap](../business/roadmap.md)). Further: LiveView
+keeps per-client state on the server (memory scales with connected operators —
+fine for plants, wrong for consumer scale); operator screens depend on server
+availability — mitigated by the edge agent's local fallback page
+([specs/edge-agent.md](../specs/edge-agent.md)) and HA deployment
+([specs/deployment.md](../specs/deployment.md)).
 
 ## Revisit when
 

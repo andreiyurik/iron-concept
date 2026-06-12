@@ -37,6 +37,9 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **Online change** | Modifying a running PLC program without stopping the process — the hardest unsolved problem for open runtimes |
 | **Commissioning (наладка)** | On-site verification that every physical signal matches configuration; IRON's [`iron field`](specs/field-verification.md) workflow |
 | **Drift** | Divergence between the configuration in Git and what actually runs; detected by `iron diff` |
+| **WASM module** | Sandboxed, language-agnostic plugin (derived tags, conversions, notification channels) with manifest-declared capabilities; can never publish commands. Spec: [specs/extensions.md](specs/extensions.md) |
+| **Satellite** | Out-of-process integration (custom driver, analytics, ML) in any language, connected to NATS with its own scoped credentials |
+| **iron lite** | Single-device deployment mode: one artifact, in-process transport, SQLite storage, identical configuration format; upgradeable via `iron migrate --to-full`. Spec: [specs/deployment.md](specs/deployment.md) |
 | **4–20mA** | The dominant analog signal standard: 4mA = range min, 20mA = max; below 4mA indicates a broken wire |
 | **Modbus / OPC-UA / S7 / MQTT / IO-Link** | Field protocols the edge agent speaks; see [specs/tag-model.md](specs/tag-model.md) for source URI schemes |
 | **OEE** | Overall Equipment Effectiveness = Availability × Performance × Quality; the plant productivity metric. Honest treatment: [business/economics.md](business/economics.md) |

@@ -132,6 +132,8 @@ The full command lifecycle is specified in [command-path.md](command-path.md).
 Custom logic — unit conversions, derived tags, custom protocol framing — can be
 deployed as WASM modules without recompiling the agent. Modules run sandboxed:
 they receive samples and return samples, with no I/O capabilities of their own.
+Manifest format, capability rules, and the full extension surface (server-side
+modules, NATS satellites): [extensions.md](extensions.md).
 
 ## Time
 

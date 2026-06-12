@@ -95,7 +95,10 @@ canonical address in the system.
 
 > **Status: design targets.** IRON has no implementation yet. The numbers below
 > describe how the architecture is intended to behave, derived from published
-> benchmarks of the underlying technologies — not from measurements of IRON itself.
+> benchmarks of the underlying technologies — not from measurements of IRON
+> itself. Converting them into measured facts (100k simulated tags, 50
+> concurrent operator sessions, fixed reference hardware) is an explicit
+> Phase 1 milestone — see the [roadmap](../business/roadmap.md).
 
 A mid-size refinery has 100,000 tags updating every second. Three filtering layers
 make this tractable:

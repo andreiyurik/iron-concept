@@ -65,6 +65,14 @@ The vertical slice, deliberately narrow:
 - One threshold alarm → Telegram notification
 - Runs on a Raspberry Pi 4; deploys via Kamal to any Linux box
 - `iron validate` for the implemented subset
+- **The scaling benchmark — retire the core risk early.** The server
+  architecture rests on one hypothesis: GenServer-per-tag + LiveView fan-out
+  handles plant scale on modest hardware. Measure it as soon as the vertical
+  slice exists: 100k simulated tags, 50 concurrent LiveView sessions, on a
+  fixed reference machine — publish latency, memory, and methodology in the
+  repo. This converts the [architecture targets](../specs/architecture.md)
+  into facts (or redesigns the weak spot while it is still cheap), and the
+  write-up doubles as the Phase 1 deep-dive that recruits Elixir contributors
 
 Explicitly deferred: OPC-UA, S7, mimics, editor, RBAC depth, PLC runtime.
 Protocol edge cases are the top schedule risk; one protocol done well beats
@@ -87,6 +95,9 @@ becomes the reference case that shortens every later sale.
 - OPC-UA client (S7-1200/1500, Beckhoff)
 - Historian trends (continuous aggregates), alarm ack + escalation, basic RBAC
 - Self-hosted installation guide: under 30 minutes on commodity hardware
+- `iron lite` — the single-artifact, zero-services mode for greenhouses and
+  workshops ([deployment Mode 0](../specs/deployment.md)): the Level 1
+  audience gets a real on-ramp, and `iron migrate --to-full` keeps it honest
 - First production plant: an IndustrialPROFI client first (trusted
   relationship, controlled failure modes), CIS market second, Brazil's
   orphaned ScadaBR community third
@@ -104,8 +115,10 @@ regular contributors, first revenue signal, 2,000+ stars.
 
 ## Phase 3 — Community and Enterprise (months 12–24)
 
-- S7 driver (the CIS installed base), SVG mimic editor, plugin system for
-  community drivers and widgets
+- S7 driver (the CIS installed base), SVG mimic editor, and the extension
+  surface ([spec](../specs/extensions.md), [ADR 0008](../decisions/0008-extensions-beyond-elixir.md)):
+  WASM plugins + NATS satellites, so the ecosystem grows in any language —
+  community drivers prove themselves as satellites, then graduate into core
 - Enterprise tier launch: SSO, multi-site, compliance reporting — boundary
   per [model.md](model.md), defined publicly before the first sale
 - PLC runtime exploration begins, strictly per

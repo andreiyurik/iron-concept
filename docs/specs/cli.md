@@ -11,7 +11,8 @@ tools that only run on Windows. No vendor IDEs. This document is the contract
 for each command.
 
 ```
-iron new        scaffold a project
+iron new        scaffold a project (--lite: single-device mode, no external services)
+iron run        run a lite project as one process tree (Mode 0)
 iron dev        run the full stack locally (Docker Compose, simulator on)
 iron validate   check every spec against its invariants
 iron simulate   define simulated signal sources
@@ -20,10 +21,15 @@ iron import     generate specs from external sources (IO lists)
 iron expand     print effective config after device-type expansion
 iron test       run tests (--sim for simulation scenarios)
 iron deploy     deploy via Kamal 2 (local server, cloud, edge)
+iron migrate    --to-full: convert a lite deployment, history included
+iron plugin     add/list/remove WASM extension modules (vendored into Git)
 iron diff       show drift between Git config and what is running
 iron field      field verification workflow (commissioning)
 iron version    versions across all targets
 ```
+
+Mode 0 (`--lite`, `iron run`, `iron migrate`) contract:
+[deployment.md](deployment.md). Plugin contract: [extensions.md](extensions.md).
 
 ## iron new
 

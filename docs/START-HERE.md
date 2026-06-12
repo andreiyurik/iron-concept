@@ -77,7 +77,8 @@ docs/
     visual-system.md       widgets → SVG mimics → editor
     field-verification.md  iron field — commissioning as a product
     testing.md             unit / integration / simulation / field
-    deployment.md          dev / local / cloud / edge via Kamal
+    deployment.md          lite / dev / local / cloud / edge
+    extensions.md          WASM plugins + satellites — extend in any language
     plc-runtime.md         long-term exploration (clearly gated)
 
   decisions/               ← WHY THIS TECH — one ADR per choice

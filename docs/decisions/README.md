@@ -14,6 +14,7 @@ support are in [../specs/](../specs/).
 | [0005](0005-apache-2-license.md) | Apache 2.0 license | Accepted |
 | [0006](0006-kamal-for-deployment.md) | Kamal 2 for deployment | Accepted |
 | [0007](0007-codesys-today-iron-plc-later.md) | Integrate CODESYS today, explore own runtime later | Accepted |
+| [0008](0008-extensions-beyond-elixir.md) | Extensions don't require Elixir (WASM + satellites) | Accepted |
 
 ## Proposing a decision
 

@@ -42,6 +42,10 @@ Single-node Postgres ceilings apply (HA via Patroni, not horizontal sharding)
 enterprise scenarios, which the multi-site tier addresses differently.
 The Timescale license (TSL for some features) needs tracking in packaging.
 
+One deliberate exception: `iron lite` (single-device mode) uses SQLite with
+the same logical schema, trading engine uniformity for zero-ops setup at
+Level 1 — see [specs/deployment.md](../specs/deployment.md), Mode 0.
+
 ## Revisit when
 
 A production deployment actually saturates a well-tuned single node, or TSL
