@@ -1,0 +1,88 @@
+<svg viewBox="0 0 900 590" xmlns="http://www.w3.org/2000/svg" style="font-family: system-ui, -apple-system, sans-serif; background:#0d1117;">
+  <defs>
+    <marker id="aRed" markerWidth="12" markerHeight="12" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#e94560"/>
+    </marker>
+    <marker id="aBlue" markerWidth="12" markerHeight="12" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#4fc3f7"/>
+    </marker>
+    <marker id="aGreen" markerWidth="12" markerHeight="12" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#66bb6a"/>
+    </marker>
+    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.35"/></filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="34" text-anchor="middle" font-size="21" font-weight="700" fill="#e6e6e6">Alarm lifecycle — ISA-18.2 state machine</text>
+  <text x="450" y="56" text-anchor="middle" font-size="12.5" fill="#9aa3ad">Back to NORMAL always takes two things: the condition must clear AND an operator must acknowledge.</text>
+
+  <!-- Legend -->
+  <line x1="196" y1="80" x2="224" y2="80" stroke="#e94560" stroke-width="2.5"/>
+  <text x="230" y="84" font-size="11" fill="#c0c6cc">alarm activates</text>
+  <line x1="360" y1="80" x2="388" y2="80" stroke="#4fc3f7" stroke-width="2.5"/>
+  <text x="394" y="84" font-size="11" fill="#c0c6cc">operator acknowledges</text>
+  <line x1="580" y1="80" x2="608" y2="80" stroke="#66bb6a" stroke-width="2.5"/>
+  <text x="614" y="84" font-size="11" fill="#c0c6cc">condition clears</text>
+
+  <!-- ===================== STATES ===================== -->
+  <!-- NORMAL -->
+  <g filter="url(#sh)">
+    <rect x="30" y="112" width="190" height="66" rx="10" fill="rgba(76,175,80,0.13)" stroke="#4caf50" stroke-width="1.6"/>
+  </g>
+  <text x="125" y="142" text-anchor="middle" font-size="15" font-weight="700" fill="#c8e6c9">NORMAL</text>
+  <text x="125" y="161" text-anchor="middle" font-size="10.5" fill="#93a893">within limits</text>
+
+  <!-- UNACK_ACTIVE -->
+  <g filter="url(#sh)">
+    <rect x="355" y="112" width="190" height="66" rx="10" fill="rgba(233,69,96,0.16)" stroke="#e94560" stroke-width="1.8"/>
+  </g>
+  <text x="450" y="140" text-anchor="middle" font-size="14" font-weight="700" fill="#ffcdd2">UNACK · ACTIVE</text>
+  <text x="450" y="159" text-anchor="middle" font-size="10.5" fill="#e0a3ad">limit crossed — needs operator</text>
+
+  <!-- ACK_ACTIVE -->
+  <g filter="url(#sh)">
+    <rect x="680" y="112" width="190" height="66" rx="10" fill="rgba(255,152,0,0.14)" stroke="#ffb74d" stroke-width="1.6"/>
+  </g>
+  <text x="775" y="140" text-anchor="middle" font-size="14" font-weight="700" fill="#ffe0b2">ACK · ACTIVE</text>
+  <text x="775" y="159" text-anchor="middle" font-size="10.5" fill="#d8b78a">acknowledged — still active</text>
+
+  <!-- UNACK_RTN -->
+  <g filter="url(#sh)">
+    <rect x="355" y="355" width="190" height="66" rx="10" fill="rgba(100,150,220,0.14)" stroke="#6f9bd8" stroke-width="1.6"/>
+  </g>
+  <text x="450" y="383" text-anchor="middle" font-size="14" font-weight="700" fill="#d3e0ff">UNACK · RETURNED</text>
+  <text x="450" y="402" text-anchor="middle" font-size="10.5" fill="#a9b8dc">cleared — not yet acknowledged</text>
+
+  <!-- ===================== TRANSITIONS ===================== -->
+  <!-- 1: NORMAL -> UNACK_ACTIVE (activates) -->
+  <line x1="228" y1="145" x2="347" y2="145" stroke="#e94560" stroke-width="2.2" marker-end="url(#aRed)"/>
+  <text x="287" y="135" text-anchor="middle" font-size="11" font-weight="600" fill="#f2a6b3">limit crossed</text>
+
+  <!-- 2: UNACK_ACTIVE -> ACK_ACTIVE (ack) -->
+  <line x1="553" y1="145" x2="672" y2="145" stroke="#4fc3f7" stroke-width="2.2" marker-end="url(#aBlue)"/>
+  <text x="612" y="135" text-anchor="middle" font-size="11" font-weight="600" fill="#9ad9f5">operator ack</text>
+
+  <!-- 3: UNACK_ACTIVE -> UNACK_RTN (clears) -->
+  <line x1="450" y1="186" x2="450" y2="347" stroke="#66bb6a" stroke-width="2.2" marker-end="url(#aGreen)"/>
+  <text x="462" y="270" font-size="11" font-weight="600" fill="#9ccc9e">condition clears</text>
+
+  <!-- 4: ACK_ACTIVE -> NORMAL (clears), bottom rail -->
+  <path d="M775,186 V495 H125 V186" fill="none" stroke="#66bb6a" stroke-width="2.2" marker-end="url(#aGreen)"/>
+  <text x="450" y="486" text-anchor="middle" font-size="11" font-weight="600" fill="#9ccc9e">condition clears</text>
+
+  <!-- 5: UNACK_RTN -> NORMAL (ack) -->
+  <path d="M355,380 H262 V158 H228" fill="none" stroke="#4fc3f7" stroke-width="2.2" marker-end="url(#aBlue)"/>
+  <text x="298" y="372" text-anchor="middle" font-size="11" font-weight="600" fill="#9ad9f5">operator ack</text>
+
+  <!-- ===================== PRIME RULE BANNER ===================== -->
+  <rect x="30" y="515" width="840" height="60" rx="10" fill="rgba(233,69,96,0.07)" stroke="rgba(233,69,96,0.45)" stroke-width="1.3" stroke-dasharray="7 5"/>
+  <!-- warning triangle -->
+  <g transform="translate(58,528)">
+    <path d="M17,0 L34,30 L0,30 Z" fill="none" stroke="#e94560" stroke-width="2.6" stroke-linejoin="round"/>
+    <rect x="15.4" y="11" width="3.2" height="11" rx="1.5" fill="#e94560"/>
+    <circle cx="17" cy="26" r="1.9" fill="#e94560"/>
+  </g>
+  <text x="112" y="540" font-size="14" font-weight="700" fill="#ffb3c0">Alarms notify — they never act.</text>
+  <text x="112" y="558" font-size="11.5" fill="#d0d0d0">No alarm can issue a command. Protective trips live in the PLC / safety system; IRON only observes them as tags.</text>
+  <text x="112" y="572" font-size="11" fill="#8b939c">Every transition is logged with a timestamp; every acknowledgment records the operator identity.</text>
+</svg>

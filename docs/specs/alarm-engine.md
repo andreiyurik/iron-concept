@@ -47,6 +47,8 @@ humans, history, and routing.
 
 ## Alarm state machine (ISA-18.2)
 
+![Alarm lifecycle: the ISA-18.2 four-state machine](../assets/alarm-lifecycle.svg)
+
 ```
             limit crossed                 operator ack
   NORMAL ───────────────► UNACK_ACTIVE ───────────────► ACK_ACTIVE
