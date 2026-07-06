@@ -28,6 +28,8 @@ iron field      field verification workflow (commissioning)
 iron version    versions across all targets
 ```
 
+![The iron workflow: design in simulation, then ship to the plant](../assets/cli-workflow.svg)
+
 Mode 0 (`--lite`, `iron run`, `iron migrate`) contract:
 [deployment.md](deployment.md). Plugin contract: [extensions.md](extensions.md).
 
