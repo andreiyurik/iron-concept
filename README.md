@@ -86,6 +86,30 @@ long-term exploration drawn dashed:
 | 📉 **Drift detection** | `iron diff` proves the plant runs exactly what Git says. Remote fleet maintenance for integrators. [spec →](docs/specs/cli.md) |
 | 🏷️ **Unlimited tags, forever** | Apache 2.0. A 40-sensor greenhouse and a 100,000-tag refinery pay the same: nothing. [ADR →](docs/decisions/0005-apache-2-license.md) |
 
+## How IRON compares
+
+The systems everyone knows, plus the modern stacks that share IRON's
+architecture — honestly. **Read the last row first.**
+
+**Legend:** ✅ shipping today · ⚠️ partial / caveats · ❌ no ·
+🟢 IRON *design target* (concept stage, not built yet)
+
+| Capability | IRON | Ignition | WinCC&nbsp;Unified | AVEVA | Schneider | FactoryTalk | UMH | Node-RED |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Open source, self-hostable free | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ✅ |
+| No per-tag / per-point / per-client meter | ✅ | ✅ | ❌ | ⚠️ | ❌ | ⚠️ | ✅ | ✅ |
+| Runs on ARM / Raspberry Pi | 🟢 | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Config as reviewable text in Git | 🟢 | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ⚠️ |
+| CLI-first, no mandatory GUI | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
+| READ/WRITE separation as architecture | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Field verification / commissioning workflow | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Production-proven & supported today** | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+IRON's column is mostly 🟢 — *targets*, not shipping features — and the last
+row is ❌ on purpose: every incumbent here is mature and IRON is a concept. The
+bet is architecture and ownership, not out-maturing a thirty-year platform.
+[Full 19-capability breakdown, with every vendor credited where it leads →](docs/vision/honest-comparison.md)
+
 ## Built on boring, proven technology
 
 | Layer | Technology | Why |

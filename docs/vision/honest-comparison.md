@@ -156,38 +156,38 @@ everyone knows *and* the modern/open stacks that share its architecture. Read
 it with the legend in mind — and read the **last row first**.
 
 **Legend:** ✅ shipping today · ⚠️ partial or with real caveats · ❌ no ·
-🎯 IRON *design target* — a concept-stage intention, not existing software.
+🟢 IRON *design target* — a concept-stage intention, not existing software.
 
 | Capability | IRON | Ignition | WinCC Unified | AVEVA | Schneider | FactoryTalk | UMH | Node-RED |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | **Cost & licensing** | | | | | | | | |
 | Open source, self-hostable free | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ✅ |
 | No per-tag / per-point / per-client meter | ✅ | ✅ | ❌ | ⚠️ | ❌ | ⚠️ | ✅ | ✅ |
-| Free at single-device / hobby scale | 🎯 | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ✅ |
+| Free at single-device / hobby scale | 🟢 | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ✅ |
 | **Platform** | | | | | | | | |
-| Server runs on Linux | 🎯 | ✅ | ⚠️ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Runs on ARM / Raspberry Pi | 🎯 | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| No Windows required anywhere (incl. engineering) | 🎯 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Server runs on Linux | 🟢 | ✅ | ⚠️ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Runs on ARM / Raspberry Pi | 🟢 | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| No Windows required anywhere (incl. engineering) | 🟢 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | **Architecture & workflow** | | | | | | | | |
-| Config as reviewable text in Git | 🎯 | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ⚠️ |
-| CLI-first, no mandatory GUI | 🎯 | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
-| Simulation-first as a core workflow | 🎯 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ |
-| Edge store-and-forward | 🎯 | ✅ | ❌ | ✅ | ✅ | ⚠️ | ✅ | ❌ |
-| Broker-centric / Unified Namespace | 🎯 | ✅ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ |
-| READ/WRITE separation as architecture | 🎯 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Audited command path (authn+authz+log on every write) | 🎯 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ |
+| Config as reviewable text in Git | 🟢 | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ⚠️ |
+| CLI-first, no mandatory GUI | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
+| Simulation-first as a core workflow | 🟢 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ |
+| Edge store-and-forward | 🟢 | ✅ | ❌ | ✅ | ✅ | ⚠️ | ✅ | ❌ |
+| Broker-centric / Unified Namespace | 🟢 | ✅ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ |
+| READ/WRITE separation as architecture | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Audited command path (authn+authz+log on every write) | 🟢 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ |
 | **OT features** | | | | | | | | |
-| ISA-18.2-grade alarm management | 🎯 | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Historian with full / open SQL | 🎯 | ✅ | ⚠️ | ⚠️ | ✅ | ⚠️ | ✅ | ❌ |
-| Modern web UI, no browser plugins | 🎯 | ✅ | ✅ | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ |
-| Field verification / commissioning workflow | 🎯 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| ISA-18.2-grade alarm management | 🟢 | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Historian with full / open SQL | 🟢 | ✅ | ⚠️ | ⚠️ | ✅ | ⚠️ | ✅ | ❌ |
+| Modern web UI, no browser plugins | 🟢 | ✅ | ✅ | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ |
+| Field verification / commissioning workflow | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Ownership & maturity** | | | | | | | | |
 | You own it — no vendor / distributor gatekeeper | ✅ | ⚠️ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | **Production-proven & supported today** | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 How to read this table honestly:
 
-- **The IRON column is almost entirely 🎯.** Those are intentions backed by a
+- **The IRON column is almost entirely 🟢.** Those are intentions backed by a
   detailed design, not features you can run. The only ✅ IRON earns today come
   from its *license* (Apache 2.0, no meter) and the fact that you own it — not
   from working software.
