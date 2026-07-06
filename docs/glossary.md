@@ -35,7 +35,7 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **IEC 61131-3** | The PLC programming language standard (Structured Text, Ladder, FBD…) |
 | **Structured Text (ST)** | The textual IEC 61131-3 language; Git-friendly, the focus of [specs/plc-runtime.md](specs/plc-runtime.md) |
 | **Online change** | Modifying a running PLC program without stopping the process — the hardest unsolved problem for open runtimes |
-| **Commissioning (наладка)** | On-site verification that every physical signal matches configuration; IRON's [`iron field`](specs/field-verification.md) workflow |
+| **Commissioning** | On-site verification that every physical signal matches configuration; IRON's [`iron field`](specs/field-verification.md) workflow |
 | **Drift** | Divergence between the configuration in Git and what actually runs; detected by `iron diff` |
 | **WASM module** | Sandboxed, language-agnostic plugin (derived tags, conversions, notification channels) with manifest-declared capabilities; can never publish commands. Spec: [specs/extensions.md](specs/extensions.md) |
 | **Satellite** | Out-of-process integration (custom driver, analytics, ML) in any language, connected to NATS with its own scoped credentials |

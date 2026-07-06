@@ -64,6 +64,14 @@ Modbus·OPC-UA·S7   Rust edge agent   unified namespace      Phoenix LiveView �
                    local alarms                             audited command path
 ```
 
+**How one tag makes the round trip** — and why a dashboard can never command a
+machine by accident:
+
+![How IRON works: READ path and WRITE path](docs/assets/data-flow.svg)
+
+The full layered stack — with the parts that ship first drawn solid and the
+long-term exploration drawn dashed:
+
 ![IRON Architecture](docs/assets/architecture.svg)
 
 ## What makes it different
