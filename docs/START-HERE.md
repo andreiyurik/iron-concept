@@ -61,7 +61,7 @@ docs/
     beliefs.md             the convictions the architecture is built on
     personas.md            Arman, Zarina, Bakyt, Nikita
     spec-driven.md         specs as source of truth; the AI workflow
-    honest-comparison.md   vs Ignition, UMH, Node-RED, FUXA, OpenPLC
+    honest-comparison.md   vs Siemens, Rockwell, AVEVA, Schneider, Ignition, UMH, Node-RED
 
   specs/                   ← WHAT — normative, testable
     architecture.md        two layers, broker, scaling targets

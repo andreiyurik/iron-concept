@@ -16,7 +16,7 @@ one CLI · configuration in Git · simulation before hardware
 [**Start Here**](docs/START-HERE.md) ·
 [Architecture](docs/specs/architecture.md) ·
 [Why IRON](docs/vision/problem.md) ·
-[vs Ignition / UMH / Node-RED](docs/vision/honest-comparison.md) ·
+[vs Siemens / Rockwell / AVEVA / Ignition](docs/vision/honest-comparison.md) ·
 [Roadmap](docs/business/roadmap.md)
 
 </div>

@@ -38,6 +38,59 @@ Honest bottom line: a funded plant choosing between a mature, supported
 Ignition and a young IRON should choose Ignition today. IRON's bet is the long
 bet Linux made against UNIX: open and composable compounds faster.
 
+## The traditional proprietary incumbents
+
+These are the names an automation engineer means by "SCADA vendor" — the
+systems running most of the world's plants today. They are mature, supported,
+certified, and installed at a scale IRON will not approach for years. That
+context matters before any comparison: IRON's argument with them is about
+*architecture and ownership*, never about maturity.
+
+### Siemens WinCC (Unified)
+
+The default in much of Europe and CIS industry, and deeply integrated with
+SIMATIC PLCs. Siemens modernized hard with **WinCC Unified**: the runtime now
+renders HTML5/SVG web clients and scripts in **JavaScript** (a V8 engine) —
+a real generational leap from WinCC V7's VBScript, and IRON will not pretend
+otherwise. Where it differs from IRON by design: engineering happens only in
+**TIA Portal (Windows-only)**, runtime licensing is still **tag-count based
+(PowerTags)**, the stack is proprietary, and it gravitates toward Siemens
+hardware. IRON's pitch here is openness, config-in-Git, and no per-tag meter —
+not a claim of matching WinCC's breadth or install base.
+
+### Rockwell FactoryTalk View SE
+
+The North American counterpart, and the tightest integration with
+Allen-Bradley / Logix controllers — its real moat. Rockwell simplified
+licensing in v13 (2022) to **unlimited displays**, and VBA scripting gained a
+central repository (v12+). It remains **Windows-only**, proprietary, sold
+through a **distributor network** (pricing never public), with per-client
+access licensing. IRON differs on the same axes as with Siemens: open,
+text-configured, self-owned — against a mature, deeply PLC-integrated, closed
+platform.
+
+### AVEVA / Wonderware (InTouch & System Platform)
+
+The other global giant. AVEVA's **System Platform** gives a genuinely strong
+object/asset model, and **InTouch Unlimited** (2023) removed the old per-tag
+ceiling, with the **AVEVA Flex** subscription (credit-based, cloud + on-prem)
+modernizing how it's bought. Credit where due. The design differences remain:
+**Windows-only**, proprietary, QuickScript, and a subscription cost structure
+that grows with the enterprise. IRON targets the opposite end — one CLI, two
+containers, a $150 box — for the engineer and integrator who will never run an
+enterprise license manager.
+
+### Schneider Electric (EcoStruxure Geo SCADA · AVEVA Plant SCADA)
+
+Schneider's SCADA shows up in two forms: **EcoStruxure Geo SCADA Expert**
+(formerly ClearSCADA) — strong for telemetry and wide-area monitoring, with a
+SQL Server backend and mature **store-and-forward** for RTUs over DNP3 — and
+**AVEVA Plant SCADA** (formerly Citect, now under AVEVA after the
+Schneider–AVEVA merger). Both are **Windows-based**, proprietary, and licensed
+**per point / per node**. Geo SCADA's telemetry pedigree is real and IRON does
+not claim to beat it there today; IRON's difference is again openness,
+text-first configuration, and ownership without a per-point meter.
+
 ## United Manufacturing Hub
 
 The closest open-source analog — UMH assembles a Unified Namespace stack
@@ -96,22 +149,57 @@ Respected in education and security research; not positioned for production
 process control (no online change, limited fieldbus, no deterministic-runtime
 story). Detailed comparison lives in the PLC runtime spec.
 
-## Feature matrix
+## The full comparison
 
-Kept honest: ✅ = exists today, 🎯 = IRON design target (nothing more).
+The complete landscape in one place: IRON against the proprietary incumbents
+everyone knows *and* the modern/open stacks that share its architecture. Read
+it with the legend in mind — and read the **last row first**.
 
-| Capability | IRON | Ignition | UMH | Node-RED | FUXA |
-|---|---|---|---|---|---|
-| `new project` CLI → working dashboard | 🎯 | ❌ (installer + Designer) | ❌ (Helm) | partial | ❌ |
-| Config as reviewable text in Git | 🎯 | ✅ (8.x file-based) | partial | partial (flow JSON) | ❌ |
-| Runs on Raspberry Pi | 🎯 | ✅ (Edge/Maker) | ❌ (k3s heavy) | ✅ | ✅ |
-| No per-tag licensing | 🎯 | ✅ (per-server instead) | ✅ | ✅ | ✅ |
-| Built-in simulator as first-class workflow | 🎯 | partial | ❌ | ❌ | partial |
-| Store-and-forward edge agent | 🎯 | ✅ (Edge) | ✅ | ❌ | ❌ |
-| ISA-18.2-style alarm management | 🎯 | ✅ | ❌ | ❌ | partial |
-| Audited command path, READ/WRITE separation | 🎯 | partial | ❌ | ❌ | ❌ |
-| Field verification workflow | 🎯 | ❌ | ❌ | ❌ | ❌ |
-| Open source | ✅ Apache 2.0 | ❌ | partial (open core) | ✅ | ✅ GPL |
+**Legend:** ✅ shipping today · ⚠️ partial or with real caveats · ❌ no ·
+🎯 IRON *design target* — a concept-stage intention, not existing software.
 
-The two rows where IRON is alone — audited command path as architecture, and
-field verification as product — are the rows to build first.
+| Capability | IRON | Ignition | WinCC Unified | AVEVA | Schneider | FactoryTalk | UMH | Node-RED |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| **Cost & licensing** | | | | | | | | |
+| Open source, self-hostable free | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ✅ |
+| No per-tag / per-point / per-client meter | ✅ | ✅ | ❌ | ⚠️ | ❌ | ⚠️ | ✅ | ✅ |
+| Free at single-device / hobby scale | 🎯 | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ✅ |
+| **Platform** | | | | | | | | |
+| Server runs on Linux | 🎯 | ✅ | ⚠️ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Runs on ARM / Raspberry Pi | 🎯 | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| No Windows required anywhere (incl. engineering) | 🎯 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **Architecture & workflow** | | | | | | | | |
+| Config as reviewable text in Git | 🎯 | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ⚠️ |
+| CLI-first, no mandatory GUI | 🎯 | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
+| Simulation-first as a core workflow | 🎯 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ |
+| Edge store-and-forward | 🎯 | ✅ | ❌ | ✅ | ✅ | ⚠️ | ✅ | ❌ |
+| Broker-centric / Unified Namespace | 🎯 | ✅ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ |
+| READ/WRITE separation as architecture | 🎯 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Audited command path (authn+authz+log on every write) | 🎯 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ |
+| **OT features** | | | | | | | | |
+| ISA-18.2-grade alarm management | 🎯 | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Historian with full / open SQL | 🎯 | ✅ | ⚠️ | ⚠️ | ✅ | ⚠️ | ✅ | ❌ |
+| Modern web UI, no browser plugins | 🎯 | ✅ | ✅ | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ |
+| Field verification / commissioning workflow | 🎯 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Ownership & maturity** | | | | | | | | |
+| You own it — no vendor / distributor gatekeeper | ✅ | ⚠️ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **Production-proven & supported today** | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+How to read this table honestly:
+
+- **The IRON column is almost entirely 🎯.** Those are intentions backed by a
+  detailed design, not features you can run. The only ✅ IRON earns today come
+  from its *license* (Apache 2.0, no meter) and the fact that you own it — not
+  from working software.
+- **The last row is ❌ for IRON on purpose.** Every incumbent here is proven,
+  supported, and certified; IRON is a concept. If maturity is your deciding
+  factor, every other column wins today. That is the honest state of things.
+- **Two rows are IRON-alone by design:** READ/WRITE separation as architecture,
+  and field verification as a product. Those are the rows worth building first —
+  the capabilities no incumbent offers, not the ones where IRON merely catches
+  up.
+- The incumbents are strong where the table can't show it: install base,
+  hardware integration, decades of edge cases handled, training ecosystems, and
+  regulatory track record. None of that is copied quickly, and IRON's plan
+  respects it — the [roadmap](../business/roadmap.md) competes on architecture
+  and developer experience, not on out-maturing a thirty-year platform.
