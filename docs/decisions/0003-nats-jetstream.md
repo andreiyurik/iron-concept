@@ -7,7 +7,7 @@ type: decision
 
 ## Context
 
-iron-core (Rust, OT side) and iron-web (Elixir, IT side) need a transport that
+iron-core (Rust, OT side) and iron-server (Rust, IT side) need a transport that
 survives network partitions, replays missed data, runs on a $150 box, and is
 operable by a 5-person integrator — not a platform team.
 
@@ -32,8 +32,9 @@ Subjects implement the Unified Namespace: one canonical address per tag.
   weaker durability story than JetStream streams, no replay-from-offset, and
   subject-level authz is less granular. Sparkplug B interop remains on the
   roadmap.
-- **Phoenix PubSub alone** — no durability, couples the edge to the Elixir
-  cluster.
+- **In-process channels alone** (what the single-binary default uses) — no durability
+  across hosts, couples the edge to the server process; right for one box,
+  wrong for a plant.
 - **Redis Streams** — another stateful service to operate, weaker story for
   edge buffering and authorization.
 

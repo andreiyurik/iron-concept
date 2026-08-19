@@ -30,7 +30,7 @@ backwards-compatible-migration enforcement, config SHA stamping for
   option later.
 - **Plain Docker Compose + SSH scripts** — no health-gated rollouts, no
   rollback story, everyone reinvents the same scripts badly.
-- **Nerves firmware** — excellent for harsh-environment edge devices, kept as
+- **Immutable firmware images** (Yocto/Buildroot + A/B OTA) — excellent for harsh-environment edge devices, kept as
   an advanced packaging option, not the default workflow
   ([guides/hardware.md](../guides/hardware.md)).
 - **systemd + bare binaries** — attractive minimalism, loses the multi-arch

@@ -21,7 +21,7 @@ Windows service crashes every few weeks.
 his tag definitions before they touch the plant. A historian built on
 PostgreSQL — a technology with 30 years of documentation. No vendor to call
 at 2am, because nothing about his system is a secret to him.
-Entry level: 2 (YAML). He never has to learn Elixir.
+Entry level: 2 (YAML). He never has to learn Rust.
 
 ## Zarina — System Integrator
 
@@ -55,9 +55,9 @@ Level 1.
 
 ## Nikita — Backend Developer
 
-6 years of Go and Elixir in fintech. Has never been inside a factory. Sees
-IRON on GitHub and realizes Elixir, NATS, and TimescaleDB are tools he already
-knows — applied to a domain he doesn't.
+6 years of Go and Rust in fintech, Svelte on the side. Has never been inside
+a factory. Sees IRON on GitHub and realizes Rust, NATS, and TimescaleDB are
+tools he already knows — applied to a domain he doesn't.
 
 **IRON for Nikita:** Real distributed-systems problems — at-least-once
 delivery, store-and-forward, WebSocket fan-out, alarm state machines — with

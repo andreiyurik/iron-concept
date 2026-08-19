@@ -27,7 +27,10 @@ domain (`tokio-modbus`, `opcua`, `ethercrab`, `linux-embedded-hal`).
   ecosystem is thinner, and FFI to protocol stacks is more painful.
 - **Elixir everywhere (Nerves)** — attractive operationally, but soft-realtime
   BEAM is the wrong layer for tight protocol framing and for the future PLC
-  runtime; Nerves remains a supported *packaging* option for edge devices.
+  runtime. (The server later moved to Rust too —
+  [ADR 0009](0009-rust-for-the-server.md) — so the whole runtime is one
+  language; immutable-firmware packaging for edge devices stays on the
+  roadmap without Nerves.)
 
 ## Trade-offs
 

@@ -106,7 +106,7 @@ The factory floor keeps working when the server is unreachable:
 - Polling continues, buffering continues, local alarm evaluation continues.
 - The agent serves a **local read-only fallback page** (plain HTML over HTTP on
   the OT network): current values, qualities, and active alarms for its tags.
-  When iron-web is down, the operator is degraded — not blind. This page is
+  When iron-server is down, the operator is degraded — not blind. This page is
   READ-only by construction: the fallback server has no code path to the
   command executor.
 - Command execution requires the server (commands originate only from the
@@ -133,7 +133,7 @@ Custom logic — unit conversions, derived tags, custom protocol framing — can
 deployed as WASM modules without recompiling the agent. Modules run sandboxed:
 they receive samples and return samples, with no I/O capabilities of their own.
 Manifest format, capability rules, and the full extension surface (server-side
-modules, NATS satellites): [extensions.md](extensions.md).
+modules, plugins): [extensions.md](extensions.md).
 
 ## Time
 

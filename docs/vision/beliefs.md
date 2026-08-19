@@ -48,7 +48,7 @@ to learn the other's tools to do their job:
 ```
 Level 1 — Mouse only         visual dashboard builder, no files, no code
 Level 2 — YAML               tags, alarms, objects as text in Git
-Level 3 — Elixir + Rust      custom widgets, drivers, logic
+Level 3 — Code               plugins in any language, Rust drivers, Svelte widgets
 ```
 
 These are not separate modes — they are layers of one system. A Level 1 user

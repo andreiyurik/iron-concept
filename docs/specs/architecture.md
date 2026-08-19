@@ -30,19 +30,26 @@ IRON has a two-layer architecture with a clear boundary between runtime and inte
                             │ NATS JetStream
                             │ subject: plant.line1.reactor1.temperature
 ┌───────────────────────────▼─────────────────────────────────────┐
-│  iron-web  (Phoenix / LiveView)                                  │
+│  iron-server  (Rust)                                             │
 │                                                                  │
-│  • Real-time dashboards — LiveView                               │
-│  • SVG mimic editor — React island (design-time only)            │
-│  • Tag Engine (GenServer per tag)                                │
+│  • Tag Engine — sharded in-memory state, per-subscription fan-out│
 │  • Alarm aggregation, escalation, acknowledgment                  │
 │  • Historian — TimescaleDB (PostgreSQL + time-series)            │
 │  • Command Service — the only WRITE entry point                   │
-│  • REST API · WebSocket · RBAC · Audit log                       │
+│  • REST API · typed WebSocket · RBAC · Audit log                  │
+│  • MCP server — agent interface (same core as the CLI)            │
+│  • Embedded UI assets — Svelte 5 dashboards, mimics, editor       │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │ WebSocket
+                            │ WebSocket (typed protocol)
                         Browser / Mobile
 ```
+
+Both `iron-core` and `iron-server` are crates in one Cargo workspace and
+share `iron-domain` — the pure tag/quality/deadband/alarm logic, written
+once, compiled to native and to WASM
+([ADR 0009](../decisions/0009-rust-for-the-server.md)). The `iron` binary
+contains the CLI, the server, the simulator, and the MCP server
+([agent-interface.md](agent-interface.md)).
 
 ```mermaid
 graph TD
@@ -50,11 +57,11 @@ graph TD
         EDGE["Edge Agent\nModbus · OPC-UA · S7 · MQTT\nDeadband · Buffer · Local alarms · WASM"]
     end
 
-    subgraph iron-web ["iron-web (Phoenix / LiveView · Server)"]
-        PHOENIX["LiveView\nGenServer per tag\nReal-time diffs · Auto-recovery"]
+    subgraph iron-server ["iron-server (Rust · Server)"]
+        TAGS["Tag Engine\nSharded state · Per-subscription fan-out\nReplay on restart"]
         TSDB["Historian\nTimescaleDB\nContinuous aggregates · Full SQL"]
         ALARM["Alarm Aggregation\nEscalation · Shelving · Ack"]
-        HMI["Web UI\nDashboards · Trends · Alarms"]
+        HMI["Web UI (Svelte 5)\nDashboards · Mimics · Trends · Alarms"]
     end
 
     PLC["PLCs & Sensors"]
@@ -62,10 +69,10 @@ graph TD
 
     PLC -->|protocols| EDGE
     EDGE -->|publish| NATS
-    NATS --> PHOENIX
-    PHOENIX --> TSDB
-    PHOENIX --> ALARM
-    PHOENIX -->|WebSocket| HMI
+    NATS --> TAGS
+    TAGS --> TSDB
+    TAGS --> ALARM
+    TAGS -->|typed WebSocket| HMI
 ```
 
 ## Responsibilities
@@ -74,17 +81,17 @@ graph TD
 |---|---|---|
 | Edge agent (iron-core) | Polling, conversion, quality, deadband, buffering, first-level alarm evaluation, executing authorized commands | Originate commands on its own |
 | NATS JetStream | Transport between edge and server, replay, at-least-once delivery | Hold business logic |
-| iron-web | Visualization, historian, alarm aggregation/escalation, RBAC, audit, Command Service | Bypass the Command Service for writes |
+| iron-server | Visualization, historian, alarm aggregation/escalation, RBAC, audit, Command Service, agent interface | Bypass the Command Service for writes |
 | Browser | Display, operator interaction | Talk to the edge or PLC directly |
 
 ## Communication layer
 
-NATS JetStream is the internal message bus between iron-core and iron-web.
+NATS JetStream is the internal message bus between iron-core and iron-server.
 The rationale for choosing NATS is in [decisions/0003-nats-jetstream.md](../decisions/0003-nats-jetstream.md).
 
 - Subject hierarchy mirrors physical topology: `plant.line_1.reactor_01.temperature`
 - Wildcard subscriptions: `plant.line_1.>` gives you all of line 1
-- Replay on reconnect — a restarted iron-web instance catches up from the stream
+- Replay on reconnect — a restarted iron-server instance catches up from the stream
 - Data subjects and command subjects live in **separate authorization scopes** —
   see [read-write-separation.md](read-write-separation.md) and [security.md](security.md)
 
@@ -108,12 +115,12 @@ Layer 1 — Deadband (Rust edge agent)
   100,000 polls/sec → ~10,000 publishes/sec
   (typical −80–90% for analog tags; digital tags publish only on change)
 
-Layer 2 — GenServer routing (Elixir)
-  Each tag = one lightweight Elixir process (~2KB RAM)
-  100,000 tags ≈ 200MB RAM
+Layer 2 — Tag-state routing (Rust server)
+  Each tag = one entry in a sharded in-memory map, not a process
+  Target: 100,000 tags in tens of MB, not hundreds
   Updates go only to subscribers of that tag, not broadcast
 
-Layer 3 — Client subscription (LiveView)
+Layer 3 — Client subscription (typed WebSocket)
   Operator opens a pump station screen
   → subscribes to the 50–200 visible tags only
   → browser receives 50–200 updates/sec, not 10,000
@@ -127,11 +134,13 @@ screen. Not 100,000. This is the difference between correct and naive architectu
 These are vendor/community published figures for the components in isolation,
 under their own benchmark conditions. They bound what is possible; they do not
 describe IRON. IRON will publish its own measured numbers when a prototype exists.
+No external number is cited for the Rust server's fan-out: IRON targets
+hundreds of concurrent operator sessions, and that is measured in Phase 1,
+not borrowed from someone else's benchmark.
 
 | Claim | Source | Caveat |
 |---|---|---|
 | NATS core: millions of msg/sec | NATS benchmarks | Core NATS, in-memory. JetStream (persistent, at-least-once) is significantly slower — plan around ~100k–1M msg/sec, still far above IRON's needs |
-| Phoenix: 2M WebSocket connections | Phoenix team benchmark (2015) | Raw channels on a 40-core/128GB machine. LiveView processes are heavier; IRON targets hundreds of concurrent operators, not millions |
 | TimescaleDB: ~1M rows/sec insert | TimescaleDB benchmarks | Batched inserts on server-class hardware |
 | TimescaleDB: 8–12× compression | TimescaleDB documentation | Workload-dependent |
 
@@ -139,7 +148,7 @@ describe IRON. IRON will publish its own measured numbers when a prototype exist
 
 ```
 VLAN 10 (OT): PLCs, sensors, I/O modules — isolated
-VLAN 20 (IT): NATS, TimescaleDB, iron-web server
+VLAN 20 (IT): NATS, TimescaleDB, iron-server
 Firewall rule: OT → IT allowed (edge agent initiates connection to NATS)
                IT → OT blocked by default (no unsolicited access to PLCs)
 

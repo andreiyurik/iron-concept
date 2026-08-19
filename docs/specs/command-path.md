@@ -72,7 +72,7 @@ ISSUED → DELIVERED (edge received) → EXECUTED (protocol write OK)
 ## Audit policy — availability over centralized logging
 
 Every command MUST be journaled before it is sent. But "journaled" means a
-**local append-only journal on the iron-web host** (fsync'd file or local
+**local append-only journal on the iron-server host** (fsync'd file or local
 table), not a synchronous write to the central historian.
 
 - Journal append fails (local disk failure) → command is refused. This is the

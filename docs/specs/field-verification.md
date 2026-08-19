@@ -18,7 +18,7 @@ results stored in Git.
 ## The two-window workflow
 
 The commissioning engineer connects a laptop and opens two browser windows fed
-by the same live PubSub stream:
+by the same live tag stream:
 
 ```
 Window 1: /dashboard/reactor_01          Window 2: /field

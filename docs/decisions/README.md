@@ -8,13 +8,16 @@ support are in [../specs/](../specs/).
 | ADR | Decision | Status |
 |---|---|---|
 | [0001](0001-rust-for-edge.md) | Rust for the edge agent | Accepted |
-| [0002](0002-elixir-phoenix-liveview.md) | Elixir / Phoenix LiveView for the server | Accepted |
+| [0002](0002-elixir-phoenix-liveview.md) | Elixir / Phoenix LiveView for the server | Superseded by 0009 |
 | [0003](0003-nats-jetstream.md) | NATS JetStream as the message bus | Accepted |
 | [0004](0004-timescaledb.md) | TimescaleDB as the single database | Accepted |
 | [0005](0005-apache-2-license.md) | Apache 2.0 license | Accepted |
 | [0006](0006-kamal-for-deployment.md) | Kamal 2 for deployment | Accepted |
 | [0007](0007-codesys-today-iron-plc-later.md) | Integrate CODESYS today, explore own runtime later | Accepted |
-| [0008](0008-extensions-beyond-elixir.md) | Extensions don't require Elixir (WASM + satellites) | Accepted |
+| [0008](0008-extensions-beyond-elixir.md) | Extensions don't require the core language (plugins + WASM modules) | Accepted |
+| [0009](0009-rust-for-the-server.md) | Rust for the server — one runtime language | Accepted |
+| [0010](0010-svelte-for-the-ui.md) | Svelte 5 + TypeScript for the browser UI | Accepted |
+| [0011](0011-ai-native-surface.md) | AI-native surface: one core, two interfaces (CLI + MCP) | Accepted |
 
 ## Proposing a decision
 

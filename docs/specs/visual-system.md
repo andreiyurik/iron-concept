@@ -7,8 +7,10 @@ depends-on: [tag-model, command-path, historian]
 # Visual System
 
 How IRON renders SCADA screens — from widget dashboards to full P&ID mnemonic
-diagrams. Three layers, each serving a different user. LiveView handles ~95% of
-runtime rendering; React exists only in the design-time editor.
+diagrams. Three layers, each serving a different user. All three are Svelte 5
+components served from the `iron` binary
+([ADR 0010](../decisions/0010-svelte-for-the-ui.md)); the editor is
+design-time only.
 
 A SCADA screen is not a web page: an operator must understand plant state in
 two seconds by looking at the picture. The visual representation is a safety
@@ -17,20 +19,21 @@ tool.
 ## The three layers
 
 ```
-Layer 3 — SVG Editor (React island)            DESIGN-TIME ONLY · Phase 3
+Layer 3 — SVG Editor (Svelte, design-time)          DEFERRED · Inkscape/Figma today
   Drag-and-drop mnemonic builder for integrators
   Output: SVG files with data-iron-* attributes (the Layer 2 format)
 
-Layer 2 — SVG Mimics (LiveView + ~80-line JS hook)   RUNTIME · Phase 2
-  Static SVG drawn in Inkscape/Figma/AI + dynamic data overlay
+Layer 2 — SVG Mimics (one Svelte Mimic component)    RUNTIME · Phase 2
+  Static SVG drawn in Inkscape/Figma/AI + reactive data binding
 
-Layer 1 — Widget Dashboards (pure LiveView)          RUNTIME · Phase 1
+Layer 1 — Widget Dashboards (Svelte components)      RUNTIME · Phase 1
   Grid of ready-made components, YAML or mouse
   Covers ~70% of real-world use cases
 ```
 
-A single screen can combine all three. Rationale for LiveView-first:
-[decisions/0002-elixir-phoenix-liveview.md](../decisions/0002-elixir-phoenix-liveview.md).
+A single screen can combine all three. Rationale for one Svelte stack:
+[ADR 0010](../decisions/0010-svelte-for-the-ui.md); why the server is not
+rendering the UI any more: [ADR 0009](../decisions/0009-rust-for-the-server.md).
 
 ## Layer 1 — Widget dashboards
 
@@ -81,11 +84,20 @@ Normative:
   never displayed as a plausible number.
 - Control widgets MUST reference a command definition; binding a control
   widget to a tag is a validation error.
-- Each widget subscribes via PubSub to exactly its own tags — an open screen
-  receives updates for visible tags only.
+- Each widget subscribes over the typed WebSocket to exactly its own tags —
+  an open screen receives updates for visible tags only.
+- A widget is a Svelte 5 component against one contract: it declares the
+  tags (display) or command (control) it binds, and receives
+  `{value, quality, timestamp}` as reactive state. Custom widgets implement
+  the same contract; `iron validate` rejects a widget that binds a control to
+  a tag or a display to a command. **In v1 custom widgets reach users by
+  being contributed to the built-in library** — the UI is embedded in the
+  binary, and a runtime loading mechanism for widgets is *deferred* with its
+  trigger in [business/deferred.md](../business/deferred.md). SVG mimics
+  cover the "my own picture" need without any code.
 
-Trend charts are the one runtime JS dependency (uPlot, 45KB, zero deps),
-fed by the historian's continuous aggregates with LOCF semantics
+Trend charts are the one non-Svelte runtime dependency (uPlot, 45KB, zero
+deps), fed by the historian's continuous aggregates with LOCF semantics
 ([historian.md](historian.md)).
 
 ## Layer 2 — SVG mimics
@@ -121,27 +133,26 @@ Any SVG element binds to a tag with `data-iron-*` attributes:
 | `data-iron-quality` | Quality badge/border rendering |
 | `data-iron-command` (+`-value`) | Click sends a command via the WRITE path |
 
-Mechanics: a `MimicLive` LiveView loads the SVG, extracts bound tags,
-subscribes via PubSub, and pushes `{tag, value, quality}` events to an
-~80-line JS hook that patches the DOM directly. Re-rendering the whole SVG
-per update was rejected: 200 bound elements at 10Hz would mean 2,000 full
-diffs/sec; the hook pushes 3 fields.
+Mechanics: one `Mimic` Svelte component loads the SVG, extracts bound
+elements, subscribes to exactly those tags over the WebSocket, and patches
+each bound attribute reactively when its tag changes. Re-rendering the whole
+SVG per update is rejected by design: 200 bound elements at 10Hz would mean
+2,000 full re-renders/sec; a bound element updates three attributes.
 
 Workflow: draw in Inkscape/Figma (or generate with AI) → add bindings →
 `iron validate --mimics` confirms every referenced tag exists → commit SVG to
 Git. IRON ships a standard symbol library (pumps, valves, tanks, motors,
 pipes, instruments) with binding placeholders.
 
-## Layer 3 — Visual editor
+## Layer 3 — Visual editor (deferred)
 
-A React island mounted via phx-hook, design-time only. An editor is a
-fundamentally different application from a dashboard: client-authoritative
-state, 60fps mouse interaction, imperative DOM. LiveView's server round-trip
-per interaction is wrong for this; React is right. The operator never loads
-the editor — its output is a Layer 2 SVG file committed to Git.
-
-Editor scope (Phase 3): palette drag-and-drop, tag binding panel, pipe drawing
-with auto-routing, snap/align/group, undo/redo, symbol editor, save → Git.
+Inkscape, Figma, or an AI drawing an SVG with `data-iron-*` attributes already
+*is* the editor: the file format is the contract, and `iron validate --mimics`
+checks it. A built-in drag-and-drop editor — palette, tag-binding panel, pipe
+auto-routing, snap/align, undo/redo, save → Git — is designed as a Svelte
+application served only to design-time roles, never touching live plant
+state, and is *deferred* until an integrator asks for it with money on the
+table ([business/deferred.md](../business/deferred.md)).
 
 ## Trade-offs accepted
 
@@ -151,10 +162,10 @@ with auto-routing, snap/align/group, undo/redo, symbol editor, save → Git.
   browser hit-testing for a scale IRON does not target.
 - **No collaborative editing.** Mimic design is single-user in practice; Git
   handles merges.
-- **uPlot as runtime JS.** The one exception to "no JS frameworks at runtime";
-  server-rendered chart images would be worse on every axis.
+- **uPlot for trends.** The one non-Svelte runtime dependency; writing a
+  high-frequency time-series chart in Svelte would be worse on every axis.
 - **No import of proprietary symbol formats.** SVG is the universal vector
-  format; converters can be community plugins.
+  format; converters can be community tools.
 
 ## Open questions
 

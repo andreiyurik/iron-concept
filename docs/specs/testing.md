@@ -14,8 +14,8 @@ levels; only the last one touches hardware.
 
 | Level | Command | Hardware | When |
 |---|---|---|---|
-| 1 Unit | `cargo test` / `mix test` | No | Every commit |
-| 2 Integration | `mix test --include integration` | No (Docker) | Every commit, CI |
+| 1 Unit | `cargo test` / `npm test` (UI) | No | Every commit |
+| 2 Integration | `cargo test --features integration` | No (Docker) | Every commit, CI |
 | 3 Simulation | `iron test --sim` | No | Development, CI |
 | 4 Field | `iron field` | Yes | On-site commissioning ([field-verification.md](field-verification.md)) |
 
@@ -47,30 +47,40 @@ fn out_of_range_raw_clamps_and_degrades_quality() {
 }
 ```
 
-```elixir
-# Tag GenServer state + PubSub broadcast
-test "tag process updates value and notifies subscribers" do
-  {:ok, pid} = TagServer.start_link(tag: "reactor_01.temperature")
-  TagServer.update(pid, value: 87.5, quality: :good)
-  assert_receive {:tag_update, %{value: 87.5, quality: :good}}
-end
+```rust
+// Tag engine: update state, notify exactly the subscribers of that tag
+#[tokio::test]
+async fn tag_update_notifies_subscribers_only() {
+    let engine = TagEngine::new();
+    let mut rx = engine.subscribe("reactor_01.temperature");
+    let mut other = engine.subscribe("reactor_01.pressure");
+    engine.update(sample("reactor_01.temperature", 87.5, Quality::Good));
+    assert_eq!(rx.recv().await.unwrap().value, 87.5);
+    assert!(other.try_recv().is_err());
+}
 
-# RBAC behavior is tested explicitly — "probably works" is not acceptable
-test "viewer role cannot send any command" do
-  assert {:error, :unauthorized} =
-    Commands.send(viewer_user(), command: "pump_01.start", value: true)
-end
+// RBAC behavior is tested explicitly — "probably works" is not acceptable
+#[test]
+fn viewer_role_cannot_send_any_command() {
+    let svc = CommandService::for_test();
+    let res = svc.submit(viewer_user(), "pump_01.start", Value::Bool(true));
+    assert!(matches!(res, Err(CommandError::Unauthorized)));
+}
 ```
 
-LiveView is tested without a browser via `Phoenix.LiveViewTest` — mount the
-view, drive interactions, assert on rendered DOM:
+The same `iron-domain` crate is tested once and reused by edge, server, and
+WASM modules — the alarm state machine and deadband tests above run in every
+target. UI components are tested without a browser engine via Vitest +
+Testing Library: mount the component, feed it a tag update, assert on DOM:
 
-```elixir
-test "BAD quality renders a visual warning" do
-  {:ok, view, _} = live(conn, ~p"/dashboard/reactor_01")
-  TagServer.update("reactor_01.temperature", value: 0.0, quality: :bad)
-  assert view |> element("[data-tag='reactor_01.temperature']") |> render() =~ "quality-bad"
-end
+```ts
+test('BAD quality renders a visual warning', async () => {
+  const { container } = render(Gauge, { tag: 'reactor_01.temperature' })
+  tagStore.apply({ tag: 'reactor_01.temperature', value: 0.0, quality: 'BAD' })
+  await tick()
+  expect(container.querySelector('[data-tag="reactor_01.temperature"]'))
+    .toHaveClass('quality-bad')
+})
 ```
 
 ## Level 2 — Integration: the chain test
@@ -83,28 +93,39 @@ layer:
 Simulated sensor value
   → iron-core: conversion, quality, deadband
   → NATS JetStream publish
-  → iron-web: TagServer → PubSub → LiveView diff → WebSocket
+  → iron-server: tag engine → subscription fan-out → WebSocket frame
   → browser DOM: value visible
 ```
 
-```elixir
-@tag :integration
-test "signal flows from edge to browser — full chain" do
-  {:ok, dashboard, _} = live(conn, ~p"/dashboard/reactor_01")
-  IronCore.Simulator.set_tag("reactor_01.temperature", raw: 14.4, quality: :good)
-  # 14.4mA on 4–20mA / 0–200°C → 130.0°C
-  assert render(dashboard) =~ "130.0"
-  assert render(dashboard) =~ "GOOD"
-end
+```rust
+#[tokio::test]
+#[cfg_attr(not(feature = "integration"), ignore)]
+async fn signal_flows_from_edge_to_browser_full_chain() {
+    let stack = TestStack::up().await;            // NATS + TimescaleDB + iron-core (sim)
+    let mut ws = stack.websocket("/dashboard/reactor_01").await;
+    stack.simulator.set_tag("reactor_01.temperature", raw(14.4), Quality::Good);
+    // 14.4mA on 4–20mA / 0–200°C → 130.0°C
+    let frame = ws.next_update("reactor_01.temperature").await;
+    assert_eq!(frame.value, 130.0);
+    assert_eq!(frame.quality, Quality::Good);
+}
 
-@tag :integration
-test "quality degrades to BAD when polling stops" do
-  {:ok, dashboard, _} = live(conn, ~p"/dashboard/reactor_01")
-  IronCore.Simulator.stop_tag("reactor_01.temperature")
-  Process.sleep(tag_timeout_ms())
-  assert render(dashboard) =~ "BAD"
-end
+#[tokio::test]
+#[cfg_attr(not(feature = "integration"), ignore)]
+async fn quality_degrades_to_bad_when_polling_stops() {
+    let stack = TestStack::up().await;
+    let mut ws = stack.websocket("/dashboard/reactor_01").await;
+    stack.simulator.stop_tag("reactor_01.temperature");
+    let frame = ws.next_update_after(tag_timeout()).await;
+    assert_eq!(frame.quality, Quality::Bad);
+}
 ```
+
+The browser half of the chain — "the frame became a visible value" — is
+covered at the widget level by Vitest (above). Browser system tests
+(Playwright) against the same stack are *deferred* — slow, brittle, and so
+far unnecessary — with their trigger in
+[business/deferred.md](../business/deferred.md).
 
 Other required integration scenarios: network loss → SQLite buffer → replay
 with no historian gap; alarm ACTIVE at edge → escalation notification →
@@ -162,8 +183,8 @@ iron test --sim --object reactor_01
 ```yaml
 # .github/workflows/test.yml
 jobs:
-  unit:        { steps: [cargo test, mix test] }
-  integration: { services: [nats, timescaledb], steps: [mix test --include integration] }
+  unit:        { steps: [cargo test, npm test] }
+  integration: { services: [nats, timescaledb], steps: [cargo test --features integration] }
   simulation:  { steps: [iron test --sim] }
   drift:       { schedule: nightly, steps: [iron diff --target production] }
 ```
@@ -175,9 +196,10 @@ jobs:
 ```
 Layer                    Unit   Integration   Simulation   Field
 ─────────────────────────────────────────────────────────────────
-Browser DOM              LVT        ✅            —          —
-LiveView / PubSub        ✅         ✅            —          —
-TagServer / Alarm mgmt   ✅         ✅            ✅          —
+Browser DOM              Vitest     (deferred)    —          —
+WebSocket protocol       ✅         ✅            —          —
+Tag engine / Alarm mgmt  ✅         ✅            ✅          —
+iron-domain (shared)     ✅         ✅            ✅          —
 NATS transport           —          ✅            ✅          —
 Edge logic (Rust)        ✅         ✅            ✅          —
 Protocol drivers         ✅ (mocks) ✅ (diagslave)  —          —
@@ -185,5 +207,7 @@ Physical signals          —          —            —          ✅
 ```
 
 Protocol drivers test against software simulators (diagslave for Modbus,
-open62541 server for OPC-UA, snap7 for S7). Phase 3 adds hardware-in-the-loop:
+open62541 server for OPC-UA, snap7 for S7) — core drivers in `cargo test`,
+community plugin drivers through `iron test --driver`
+([extensions.md](extensions.md)). Phase 3 adds hardware-in-the-loop:
 a physical PLC bench wired to CI, exercised on every driver change.

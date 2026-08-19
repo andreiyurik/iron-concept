@@ -28,7 +28,7 @@ From a single tag file ([format](../specs/tag-model.md)):
 
 ```
 iron validate          → checks limits, ranges, sources, references
-iron generate tests    → ExUnit stubs derived from the spec
+iron generate tests    → Rust test stubs derived from the spec
 iron generate scenarios→ simulation timelines from alarm definitions
 iron dev               → dashboard widgets, trend charts, alarm panel
 iron field             → verification protocol per signal type
@@ -46,7 +46,7 @@ they cannot verify.
 ```
 Traditional approach:
   "Add a temperature sensor for reactor 01"
-  → AI generates Elixir code, Rust structs, migrations, components
+  → AI generates Rust structs, Svelte components, migrations, glue code
   → AI cannot verify correctness — hallucinations reach production
 
 IRON approach:
@@ -58,7 +58,7 @@ IRON approach:
 ```
 
 The AI produces what it is good at: structured data from natural language.
-IRON derives what AI is unreliable at: correct Rust, Elixir, SQL. The problem
+IRON derives what AI is unreliable at: correct Rust, SQL, UI bindings. The problem
 surface shrinks to one small YAML file checked by a deterministic validator.
 
 Convention over configuration is the safety net: fewer fields means fewer
@@ -70,13 +70,17 @@ catches the rest.
 iron validate && iron generate tests && iron test --sim
 ```
 
+The surface agents use to do this — CLI/MCP parity, context packs, teaching
+diagnostics, and the rule that no LLM ever runs inside IRON — is specified in
+[specs/agent-interface.md](../specs/agent-interface.md).
+
 ## The payoff, concretely
 
 A system integrator onboards a new plant:
 
 ```
 Day 1:  AI generates config/tags/*.yaml for 200 tags from the IO list
-        (or iron import io-list does it deterministically)
+        (or iron generate from-io-list does it deterministically)
         iron validate → 12 errors found, all before touching a PLC
         fix, validate clean
         iron generate tests && iron generate scenarios

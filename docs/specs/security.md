@@ -36,7 +36,7 @@ Full specification: [read-write-separation.md](read-write-separation.md).
 The broker carries both data and command subjects, so broker authorization is
 a security boundary, not a configuration detail:
 
-- Every connecting identity (each edge agent, iron-web, Command Service) has
+- Every connecting identity (each edge agent, iron-server, Command Service) has
   its own credentials (NKeys / mTLS client certs), individually revocable.
 - Edge agent `edge-line1`: publish `data.plant.line1.>` only; subscribe
   `cmd.plant.line1.>` only. It cannot read other areas' commands or forge
@@ -59,7 +59,7 @@ a security boundary, not a configuration detail:
                    │ IT → OT: blocked by default
 ┌──────────────────▼───────────────────────┐
 │  IT Zone (VLAN 20)                       │
-│  NATS · TimescaleDB · iron-web · Audit   │
+│  NATS · TimescaleDB · iron-server · Audit│
 └──────────────────┬───────────────────────┘
                    │ HTTPS / WSS, authenticated
 ┌──────────────────▼───────────────────────┐
@@ -70,6 +70,41 @@ a security boundary, not a configuration detail:
 This is the IEC 62443 zones-and-conduits model: the only conduit from OT to IT
 is the agent's outbound NATS connection, and the only path back into OT is a
 command on an authorized subject, originated by the Command Service.
+
+### Contours: the outward-facing role holds no command credentials
+
+The same principle, applied one level up. Anything that faces operators,
+office networks, or the internet is exposed by design; the Command Service
+is what must stay inside. In the default single-process deployment the two
+are separated by code and broker authorization; the *deferred* split-roles
+deployment ([business/deferred.md](../business/deferred.md)) separates them
+by hosts:
+
+```
+┌────────────────────────────────────────────┐
+│  DMZ / office VLAN                         │
+│  iron server --role ui                     │   NATS: subscribe data.> only
+│  dashboards · REST read · WS · MCP (read)  │   cmd.> credentials: none on this host
+└──────────────────┬─────────────────────────┘
+                   │ NATS only (authenticated request subject for commands)
+┌──────────────────▼─────────────────────────┐
+│  IT zone (protected)                       │
+│  iron server --role core                   │   NATS: the only cmd.> publisher
+│  Command Service · historian · alarms      │   no inbound from the DMZ except NATS
+│  NATS · TimescaleDB · Audit                │
+└──────────────────┬─────────────────────────┘
+                   │ OT → IT outbound only (as above)
+┌──────────────────▼─────────────────────────┐
+│  OT zone · edge agents · PLCs              │
+└────────────────────────────────────────────┘
+```
+
+Rule: a host that is reachable from outside the protected zone MUST NOT hold
+credentials that can publish on `cmd.>`. A compromise of the `ui` role then
+yields read access to plant data — serious, and exactly the incident the
+READ/WRITE separation is designed to bound — but no ability to write to a
+machine. Citadel egress: the `core` role never initiates connections toward
+the DMZ.
 
 ## Authentication and authorization
 

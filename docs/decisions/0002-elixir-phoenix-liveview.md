@@ -1,9 +1,15 @@
 ---
-status: accepted
+status: superseded
 type: decision
+superseded-by: 0009
 ---
 
 # ADR 0002 — Elixir / Phoenix LiveView for the Server
+
+> **Superseded by [ADR 0009](0009-rust-for-the-server.md)** (server in Rust,
+> one runtime language) and [ADR 0010](0010-svelte-for-the-ui.md) (Svelte 5
+> for the browser). Kept verbatim as the record of why Elixir was the right
+> call for a server considered in isolation, and what changed.
 
 ## Context
 

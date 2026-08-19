@@ -6,12 +6,12 @@ type: guide
 # Test-Driven Development in IRON
 
 TDD is not a methodology imposed on IRON from outside. It is the natural
-consequence of choosing Rust and Elixir — two languages where testing is built
-into the toolchain:
+consequence of choosing Rust for the whole runtime — testing is built into the
+toolchain, and the pure `iron-domain` crate has no I/O to mock:
 
 ```bash
-cargo test   # iron-core — zero configuration
-mix test     # iron-web  — zero configuration
+cargo test   # iron-domain, iron-core, iron-server — zero configuration
+npm test     # iron-ui (Vitest) — zero configuration
 ```
 
 The test *levels* (unit → integration → simulation → field) are specified in
@@ -98,29 +98,48 @@ Against real protocol simulators (diagslave, snap7, open62541 — table in
 [specs/testing.md](../specs/testing.md)) the same suite runs as integration
 tests behind `#[ignore]` gates.
 
-## Elixir: GenServers, LiveView, RBAC
+## Rust: the tag engine, quality transitions, RBAC
 
-```elixir
-describe "quality transitions" do
-  test "UNCERTAIN after missed scan cycles" do
-    {:ok, pid} = TagServer.start_link(tag: "t", scan_rate: 100, timeout: 300)
-    TagServer.update(pid, value: 87.5, quality: :good)
-    Process.sleep(350)
-    assert TagServer.get_state(pid).quality == :uncertain
-  end
-end
+Server logic is tested the same way — and because `iron-domain` is
+synchronous and clock-injected, time-based rules need no sleeping:
+
+```rust
+#[test]
+fn uncertain_after_missed_scan_cycles() {
+    let clock = TestClock::new();
+    let mut tag = TagState::new(scan_rate_ms(100), timeout_ms(300), &clock);
+    tag.update(sample(87.5, Quality::Good));
+    clock.advance_ms(350);
+    assert_eq!(tag.quality(), Quality::Uncertain);
+}
 ```
 
-LiveView TDD needs no browser — `Phoenix.LiveViewTest` mounts the view,
-drives clicks, asserts on DOM. And security behavior is tested explicitly,
-because "probably works" is not an acceptable answer to "can a viewer start
-a pump?":
+Security behavior is tested explicitly, because "probably works" is not an
+acceptable answer to "can a viewer start a pump?":
 
-```elixir
-test "viewer role cannot send any command" do
-  assert {:error, :unauthorized} =
-    Commands.send(viewer_user(), command: "pump_01.start", value: true)
-end
+```rust
+#[test]
+fn viewer_role_cannot_send_any_command() {
+    let svc = CommandService::for_test();
+    let res = svc.submit(viewer_user(), "pump_01.start", Value::Bool(true));
+    assert!(matches!(res, Err(CommandError::Unauthorized)));
+}
+```
+
+## Svelte: widgets without a browser engine
+
+Widgets are tested with Vitest + Testing Library — mount, feed a tag update,
+assert on DOM. The contract rule "BAD is never shown as a plausible number"
+is a test, not a guideline:
+
+```ts
+test('BAD quality never renders a numeric value', async () => {
+  const { getByTestId } = render(Numeric, { tag: 'reactor_01.temperature' })
+  tagStore.apply({ tag: 'reactor_01.temperature', value: 87.5, quality: 'BAD' })
+  await tick()
+  expect(getByTestId('value').textContent).not.toMatch(/87\.5/)
+  expect(getByTestId('value')).toHaveClass('quality-bad')
+})
 ```
 
 ## Why this matters here more than anywhere
@@ -134,11 +153,12 @@ every iteration is a developer who blocks production.
 ## Layout convention
 
 ```
-iron-core/src/deadband.rs        # code + #[cfg(test)] in the same file
-iron-web/lib/iron_web/tag_server.ex
-iron-web/test/iron_web/tag_server_test.exs    # mirrors lib/ exactly
-test/integration/                # mix test --include integration
-test/sim/scenarios/              # iron test --sim
+crates/iron-domain/src/deadband.rs      # code + #[cfg(test)] in the same file
+crates/iron-server/src/tag_engine.rs    # same convention
+crates/iron-server/tests/integration/   # cargo test --features integration
+ui/src/widgets/Gauge.svelte
+ui/src/widgets/Gauge.test.ts            # mirrors src/ exactly
+test/sim/scenarios/                     # iron test --sim
 ```
 
-One command for the whole logic layer: `cargo test && mix test`.
+One command for the whole logic layer: `cargo test`; add `npm test` for the UI.

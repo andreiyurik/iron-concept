@@ -21,9 +21,9 @@ The one decision that matters most: **where the PLC ends and SCADA begins.**
 Levels 1–2: everything on one device          Level 3+: mandatory separation
 ──────────────────────────────────            ─────────────────────────────────
 RevPi / Unipi / Raspberry Pi                  PLC (WAGO, Siemens, …)   x86 IPC
- ├── control logic                             scan cycle 1–10ms   →   iron-web
+ ├── control logic                             scan cycle 1–10ms   →   iron-server
  ├── iron-core edge agent                      safety logic   OPC-UA   historian
- └── iron-web SCADA                            runs if SCADA dies      alarms
+ └── iron-server SCADA                         runs if SCADA dies      alarms
 Like Rails dev mode: fine for small plants    The reliability contract of any
                                               serious plant: SCADA down ≠ plant down
 ```
@@ -35,7 +35,7 @@ Greenhouse with 10–40 sensors, irrigation, proof of concept, learning.
 ```
 Raspberry Pi 4/5 (industrial enclosure, USB SSD — not SD card!)
   ├── iron-core: reads ESP32 nodes via Modbus RTU, or sensors directly
-  ├── iron-web: dashboard on your phone
+  ├── iron-server: dashboard on your phone
   └── TimescaleDB
 
 ESP32 PLC nodes per zone (Industrial Shields, Arduino Opta — $80–150, DIN-rail)
@@ -66,8 +66,9 @@ relay ~$80, RS-485 ~$60.
 no custom driver. The Patron line (eMMC, no SD card) is the production pick.
 
 **Deployment packaging:** Docker + Kamal is the default
-([deployment](../specs/deployment.md)); Nerves immutable firmware (A/B
-rollback, 5–10s boot) is the advanced option for harsh environments.
+([deployment](../specs/deployment.md)); an immutable firmware image (A/B
+rollback, Yocto/Buildroot + RAUC/Mender-style OTA) is the advanced option for
+harsh environments.
 
 ## Level 3 — Medium plant ($2,000–8,000)
 
@@ -106,7 +107,7 @@ as they are; IRON replaces only the proprietary SCADA above them:
 50× Siemens S7-1500 (unchanged)
    │ OPC-UA (native on S7-1500)
    ▼
-x86 IPC: iron-core ──NATS──► x86 IPC: iron-web + TimescaleDB
+x86 IPC: iron-core ──NATS──► x86 IPC: iron-server + TimescaleDB
 ```
 
 The economics for a 50,000-tag plant: incumbent per-tag licensing reaches

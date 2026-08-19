@@ -31,10 +31,10 @@
   <text x="292" y="145" text-anchor="middle" font-size="10.5" fill="#9e9e9e">deadband · quality · buffer</text>
   <text x="484" y="126" text-anchor="middle" font-size="13" font-weight="600" fill="#c8e6c9">NATS broker</text>
   <text x="484" y="145" text-anchor="middle" font-size="10.5" fill="#9e9e9e">data subjects</text>
-  <text x="676" y="126" text-anchor="middle" font-size="13" font-weight="600" fill="#c8e6c9">iron-web · Phoenix</text>
+  <text x="676" y="126" text-anchor="middle" font-size="13" font-weight="600" fill="#c8e6c9">iron-server · Rust</text>
   <text x="676" y="145" text-anchor="middle" font-size="10.5" fill="#9e9e9e">Tag Engine · Historian</text>
   <text x="868" y="126" text-anchor="middle" font-size="13" font-weight="600" fill="#c8e6c9">Browser</text>
-  <text x="868" y="145" text-anchor="middle" font-size="10.5" fill="#9e9e9e">LiveView dashboard, live</text>
+  <text x="868" y="145" text-anchor="middle" font-size="10.5" fill="#9e9e9e">Svelte dashboard, live</text>
 
   <!-- READ arrows (right) -->
   <line x1="186" y1="131" x2="205" y2="131" stroke="#4caf50" stroke-width="2" marker-end="url(#arrGreen)"/>

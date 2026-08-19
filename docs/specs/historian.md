@@ -13,7 +13,7 @@ Rationale for the choice: [decisions/0004-timescaledb.md](../decisions/0004-time
 ```
 Traditional approach:              IRON:
   PostgreSQL  (config)        →     TimescaleDB (one database)
-  InfluxDB    (time-series)   →     + ETS cache in Elixir for current values
+  InfluxDB    (time-series)   →     + in-memory tag state in iron-server for current values
   Redis       (current state) →
 3 failure points, 3 sync paths     1 failure point, 0 sync paths
 ```

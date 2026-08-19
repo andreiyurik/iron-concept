@@ -39,7 +39,7 @@ If you find yourself wanting `alarm → command`, the correct designs are:
 | Level | Component | Responsibility |
 |---|---|---|
 | Detection | Edge agent | Evaluate limits on every scan, before deadband; publish ACTIVE/RTN transitions; keep working during network loss ([edge-agent.md](edge-agent.md)) |
-| Management | iron-web | State machine, acknowledgment, shelving, suppression, escalation, notification routing, alarm history |
+| Management | iron-server | State machine, acknowledgment, shelving, suppression, escalation, notification routing, alarm history |
 
 Detection lives at the edge because the edge is the component guaranteed to be
 alive next to the process. Management lives at the server because it needs

@@ -68,9 +68,14 @@ capability to write. Full threat model: [security.md](security.md).
 
 ### Process
 
-- iron-web's Command Service is the only WRITE entry point. It runs as a
-  distinct OTP application boundary with its own supervision tree; the
-  rendering layer calls it through one narrow, auditable API.
+- iron-server's Command Service is the only WRITE entry point. It is a
+  distinct crate with its own credentials and no dependency on the tag
+  engine or UI modules; the UI reaches it through one narrow, auditable API.
+- The UI-facing role MAY be deployed on a separate host with **no command
+  credentials at all** (`iron server --role ui` /
+  `--role core` — [deployment.md](deployment.md), contours in
+  [security.md](security.md)). The separation then holds even if the UI
+  host is fully compromised: the keys are not there to steal.
 - The edge agent's command executor is a distinct module from the polling
   engine. It executes only commands received on its authorized command
   subjects, validates them against `config/commands/`, and refuses anything
@@ -85,7 +90,7 @@ capability to write. Full threat model: [security.md](security.md).
 
 ## What this does not eliminate
 
-A malicious insider with valid operator credentials, a compromised iron-web
+A malicious insider with valid operator credentials, a compromised iron-server
 host, or a vulnerability in the Command Service itself can still send
 authorized-looking commands. Defense in depth — audit logging, confirmation,
 RBAC scoping, command rate limits ([command-path.md](command-path.md)) — exists

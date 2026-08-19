@@ -19,7 +19,7 @@ tool, every ORM, every DBA skill, and 30 years of documentation apply.
 Hypertables, native compression, and continuous aggregates cover the historian
 workload ([specs/historian.md](../specs/historian.md)); cross-domain JOINs
 ("show alarms for tags configured by user X last week") are single queries.
-Current-value reads are served from an ETS cache in Elixir, not from the
+Current-value reads are served from iron-server's in-memory tag state, not from the
 database.
 
 ## Alternatives
@@ -42,9 +42,10 @@ Single-node Postgres ceilings apply (HA via Patroni, not horizontal sharding)
 enterprise scenarios, which the multi-site tier addresses differently.
 The Timescale license (TSL for some features) needs tracking in packaging.
 
-One deliberate exception: `iron lite` (single-device mode) uses SQLite with
-the same logical schema, trading engine uniformity for zero-ops setup at
-Level 1 — see [specs/deployment.md](../specs/deployment.md), Mode 0.
+One deliberate exception: the default single-binary deployment uses SQLite
+with the same logical schema, trading engine uniformity for zero-ops setup;
+TimescaleDB arrives with plant mode — see
+[specs/deployment.md](../specs/deployment.md).
 
 ## Revisit when
 

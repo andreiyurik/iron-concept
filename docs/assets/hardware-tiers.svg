@@ -59,7 +59,7 @@
   <text x="260" y="199" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="600" fill="#aaaaaa" letter-spacing="0.8">HARDWARE</text>
   <circle cx="265" cy="214" r="3" fill="#5DCAA5"/>
   <text x="273" y="217" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#111111">RevPi Connect 5 — flagship</text>
-  <text x="273" y="229" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$350–500 · CM5 · EN 61131-2 · TPM 2.0 · Nerves</text>
+  <text x="273" y="229" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$350–500 · CM5 · EN 61131-2 · TPM 2.0 · A/B OTA</text>
   <circle cx="265" cy="242" r="3" fill="#5DCAA5"/>
   <text x="273" y="245" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#111111">Unipi Neuron L533</text>
   <text x="273" y="257" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$300–500 · CM4 · 56DI + 14AI + 14AO · all-in-one</text>
@@ -70,8 +70,8 @@
   <text x="608" y="199" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9" font-weight="600" fill="#aaaaaa" letter-spacing="0.8">ARCHITECTURE</text>
   <text x="608" y="216" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">One Linux controller:</text>
   <text x="608" y="231" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">Rust PLC runtime</text>
-  <text x="608" y="246" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">+ Nerves (OTA, A/B)</text>
-  <text x="608" y="261" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">+ Phoenix SCADA</text>
+  <text x="608" y="246" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">+ immutable image (OTA, A/B)</text>
+  <text x="608" y="261" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">+ iron-server SCADA</text>
   <text x="608" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#666666">PLC = SCADA = Edge</text>
 
   <!-- ═══════════ TIER 3  y=308 ═══════════ -->
@@ -96,7 +96,7 @@
   <text x="273" y="352" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$800–1200 · Linux + CODESYS + Docker · OPC-UA</text>
   <circle cx="265" cy="365" r="3" fill="#7F77DD"/>
   <text x="273" y="368" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#111111">x86 IPC (Beelink, Advantech) — SCADA</text>
-  <text x="273" y="380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$150–1500 · Phoenix + TimescaleDB + Grafana</text>
+  <text x="273" y="380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$150–1500 · iron-server + TimescaleDB + Grafana</text>
   <circle cx="265" cy="393" r="3" fill="#7F77DD"/>
   <text x="273" y="396" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#111111">BeagleBone Black Industrial</text>
   <text x="273" y="408" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$270–500 · PRU &lt;10 ns · EtherCAT possible</text>
@@ -105,7 +105,7 @@
   <rect x="606" y="330" width="224" height="17" rx="4" fill="#FFF3CD"/>
   <text x="608" y="342" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#8B5E00">Separation required</text>
   <text x="608" y="359" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">WAGO = scan cycle (PLC)</text>
-  <text x="608" y="374" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">x86 IPC = Phoenix SCADA</text>
+  <text x="608" y="374" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#333333">x86 IPC = iron-server SCADA</text>
   <text x="608" y="393" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#666666">Link: OPC-UA / MQTT</text>
   <text x="608" y="408" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#666666">SCADA down -&gt; PLC keeps running</text>
 
@@ -131,7 +131,7 @@
   <text x="273" y="475" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">Existing PLCs — not replaced!</text>
   <circle cx="265" cy="488" r="3" fill="#D85A30"/>
   <text x="273" y="491" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#111111">x86 IPC / rack server — SCADA</text>
-  <text x="273" y="503" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$2000–8000 · Elixir cluster · HA · TimescaleDB</text>
+  <text x="273" y="503" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$2000–8000 · iron-server ×2 · HA · TimescaleDB</text>
   <circle cx="265" cy="516" r="3" fill="#D85A30"/>
   <text x="273" y="519" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#111111">WAGO as OPC-UA Gateway</text>
   <text x="273" y="531" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" fill="#888888">~$800–2000 · PROFIBUS / MPI -&gt; OPC-UA bridge</text>

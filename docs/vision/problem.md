@@ -78,7 +78,7 @@ lives in [specs/plc-runtime.md](../specs/plc-runtime.md).
 - **Data sovereignty** concerns favor self-hosted, auditable systems
 - A generation of automation engineers is retiring, replaced by people who
   expect Git, a CLI, and documentation that doesn't require a training course
-- The building blocks — Rust, Erlang/OTP, TimescaleDB, NATS — are mature and
+- The building blocks — Rust, NATS, TimescaleDB, modern browsers — are mature and
   production-proven; the Unified Namespace movement has already evangelized
   the broker-centric pattern
 

@@ -68,12 +68,12 @@
       <div class="hw-name">Raspberry Pi 5 + HAT</div>
       <div class="hw-detail">
         Quad-core A76 2.4 GHz, 4/8 GB RAM<br>
-        Nerves firmware, GPIO + HAT for I/O<br>
+        Immutable A/B firmware, GPIO + HAT for I/O<br>
         Waveshare Industrial HAT: 8DI/4DO/4AI
       </div>
       <div class="hw-price">RPi ~$60 + HAT ~$40 = ~$100</div>
       <div class="io-row">
-        <span class="badge b-green">Nerves</span>
+        <span class="badge b-green">A/B OTA</span>
         <span class="badge b-green">Modbus RTU</span>
         <span class="badge b-green">WiFi/BLE</span>
       </div>
@@ -144,7 +144,7 @@
       <div class="hw-price">~$350 — $500 (+ I/O modules)</div>
       <div class="io-row">
         <span class="badge b-blue">Flagship</span>
-        <span class="badge b-green">Nerves-ready</span>
+        <span class="badge b-green">OTA-ready</span>
         <span class="badge b-green">Certified</span>
       </div>
     </div>
@@ -174,7 +174,7 @@
       <div class="hw-price">$250 — $500</div>
       <div class="io-row">
         <span class="badge b-green">High I/O count</span>
-        <span class="badge b-green">Nerves-ready</span>
+        <span class="badge b-green">OTA-ready</span>
         <span class="badge b-green">OEM-custom</span>
       </div>
     </div>
@@ -195,7 +195,7 @@
     </div>
   </div>
   <div class="role">
-    <strong>Role in IRON:</strong> Edge Gateway + PLC Runtime. Full Nerves stack + Rust PLC engine. Store-and-forward on connection loss. OTA updates. Local HMI via HDMI touchscreen or browser.
+    <strong>Role in IRON:</strong> Edge Gateway + PLC Runtime. Immutable firmware + Rust PLC engine. Store-and-forward on connection loss. OTA updates. Local HMI via HDMI touchscreen or browser.
   </div>
 </div>
 
@@ -268,7 +268,7 @@
     </div>
   </div>
   <div class="role">
-    <strong>Role in IRON:</strong> Separation of duties: WAGO/BeagleBone as PLC controllers (Rust runtime + fieldbus I/O) → x86 IPC as the SCADA server (Elixir/Phoenix + TimescaleDB + HMI). Communication over OPC-UA or MQTT.
+    <strong>Role in IRON:</strong> Separation of duties: WAGO/BeagleBone as PLC controllers (Rust runtime + fieldbus I/O) → x86 IPC as the SCADA server (iron-server + TimescaleDB + HMI). Communication over OPC-UA or MQTT.
   </div>
 </div>
 
@@ -312,7 +312,7 @@
       <div class="hw-detail">
         Xeon/i5, 32-64 GB, SSD RAID<br>
         Fanless industrial or 1U rack<br>
-        Elixir cluster (2-3 nodes)<br>
+        iron-server ×2–3 behind NATS<br>
         TimescaleDB + Grafana
       </div>
       <div class="hw-price">$2,000 — $8,000</div>
@@ -497,7 +497,7 @@
       <div class="io-type" style="color: var(--info);">SCADA server</div>
       <div class="io-spec">
         x86 IPC or rack server<br>
-        Elixir/Phoenix cluster<br>
+        iron-server ×2 (HA)<br>
         TimescaleDB (100K+ points/s)<br>
         Grafana dashboards<br>
         Redundancy 2N
@@ -506,7 +506,7 @@
     <div class="io-box">
       <div class="io-type" style="color: var(--warning);">Outputs and HMI</div>
       <div class="io-spec">
-        LiveView HMI in any browser<br>
+        Svelte HMI in any browser<br>
         Mobile notifications<br>
         PDF/email reports<br>
         REST API for MES/ERP<br>
