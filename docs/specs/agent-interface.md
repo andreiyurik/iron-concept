@@ -69,7 +69,8 @@ whatever — is fixing the problem. One format everywhere: CLI, MCP, the
 {
   "code": "IRON-E042",
   "severity": "error",
-  "location": { "file": "config/tags/reactor_01.yaml", "path": "reactor_01.pressure.alarms.high_high.limit", "line": 23 },
+  "location": { "file": "config/tags/reactor_01.yaml", "path": "reactor_01.pressure.alarms.high_high.limit",
+                "line": 23, "col": 13, "end_line": 23, "end_col": 16 },
   "message": "alarm high_high (220) exceeds range maximum (200)",
   "hint": "Either raise range to [0, 250] if the sensor supports it, or lower the limit. Alarm limits MUST lie inside range.",
   "docs": "specs/alarm-engine.md#limits"
@@ -79,8 +80,12 @@ whatever — is fixing the problem. One format everywhere: CLI, MCP, the
 Normative rules:
 
 - Every diagnostic MUST carry a stable `code`, a `location` precise enough to
-  open in an editor, a `message` stating what is wrong, and a `hint` stating
-  what to do about it.
+  open in an editor — file, YAML path, and a line/column **range**, not just a
+  line — a `message` stating what is wrong, and a `hint` stating what to do
+  about it. The format is LSP-compatible by design: a future `iron lsp`
+  ([deferred.md](../business/deferred.md)) maps it onto editor diagnostics
+  without changing it. Agents get MCP; humans get the editor; both wrap the
+  same core.
 - Codes are stable across releases; a code is never reused for a different
   condition. `docs` links to the normative sentence the rule comes from.
 - Diagnostics are written to be pasted, unchanged, into an agent's context as
