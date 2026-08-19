@@ -47,8 +47,12 @@ contributors.
 Promotion that works: a specific technical question on the Rust users forum
 ("Sharded tag state + WebSocket fan-out for 100k tags — architecture feedback
 wanted"), r/rust + r/sveltejs + r/PLC for all halves of the audience, direct
-outreach to maintainers of `tokio-modbus`, `opcua`, `axum` ("read your work on X,
-would value your view on this decision" — never "please contribute").
+outreach to maintainers of `tokio-modbus`, `opcua`, `axum`, and OpenPLC
+("read your work on X, would value your view on this decision" — never
+"please contribute"). The OpenPLC/Beremiz community is a natural ally, not a
+competitor: OpenPLC + IRON is the fully open stack neither project can offer
+alone (ADR 0007), and their education-and-maker audience is exactly IRON's
+Level 1.
 
 **Done when:** 50+ stars, 3+ substantive spec discussions, 1 person genuinely
 interested in contributing.

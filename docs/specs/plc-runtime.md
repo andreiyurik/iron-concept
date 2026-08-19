@@ -47,6 +47,12 @@ the same scenario format as the rest of IRON ([testing.md](testing.md)).
 Version-controlled, unit-tested, CI-checked PLC programs — something no
 mainstream vendor offers.
 
+The toolchain is deliberately not tied to a future IRON runtime: OpenPLC
+programs are the same Structured Text, so the first users of `iron test --sim
+<program>.st` can be the existing OpenPLC community — testing their programs
+against IRON scenarios years before any IRON runtime exists. That adoption
+(or its absence) is exactly the evidence the Phase 3 gate asks for.
+
 When the runtime runs inside iron-core, every IEC 61131-3 variable is natively
 a tag in the NATS namespace — no OPC-UA server, no Modbus gateway between the
 control program and the historian.

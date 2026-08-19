@@ -40,6 +40,10 @@ Raspberry Pi 4/5 (industrial enclosure, USB SSD — not SD card!)
 
 ESP32 PLC nodes per zone (Industrial Shields, Arduino Opta — $80–150, DIN-rail)
   └── Modbus RTU over RS-485, cable runs up to 1,200m
+
+Fully open control option: OpenPLC on a second Pi (IEC 61131-3, Modbus TCP)
+  └── open source from relay to dashboard — control logic in OpenPLC,
+      monitoring in IRON, no vendor anywhere (ADR 0007, position 2)
 ```
 
 A 5-greenhouse farm: one Pi + five ESP32 nodes ≈ $700–1,000 (a comparable

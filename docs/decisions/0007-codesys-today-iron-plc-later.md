@@ -14,7 +14,7 @@ logic. Without an explicit decision, this reads as a contradiction.
 
 ## Decision
 
-Two positions, both held deliberately:
+Three positions, all held deliberately:
 
 1. **Today (Phases 0–2):** IRON is SCADA. The PLC layer is whatever the plant
    has or buys — CODESYS on WAGO, TwinCAT on Beckhoff, Siemens S7, CLICK PLUS.
@@ -22,7 +22,19 @@ Two positions, both held deliberately:
    plant to replace a working, certified controller. Where the controller
    runs Linux (WAGO, CLICK PLUS), iron-core happily coexists on the same
    hardware, with the vendor runtime owning the scan cycle.
-2. **Long-term (Phase 3+, evidence-gated):** explore an open Rust runtime on
+2. **Today, at the non-critical tier:** open-source PLCs are first-class
+   peers. OpenPLC speaks Modbus TCP, so it works with IRON's v1 driver with
+   zero new code — which makes a **fully open stack from relay to dashboard**
+   (OpenPLC on a Pi for control, IRON for monitoring) a deliberate offering
+   for education, makers, and Level 1 sites
+   ([hardware guide](../guides/hardware.md)). This is a niche position, not a
+   production recommendation: OpenPLC lacks online change and a determinism
+   story, so factories stay on vendor PLCs — and the safety line does not
+   move (interlocks belong in the PLC, so PLC quality matters —
+   [alarm-engine.md](../specs/alarm-engine.md)). GPLv3 and Apache 2.0 coexist
+   because OpenPLC is a separate device talked to over Modbus — integration,
+   never linking or forking.
+3. **Long-term (Phase 3+, evidence-gated):** explore an open Rust runtime on
    `plc-lang/rusty`, because the bottom of the stack deserves the same
    openness as the top ([specs/plc-runtime.md](../specs/plc-runtime.md)).
    This begins as upstream contributions and a simulation toolchain, not as a

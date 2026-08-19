@@ -4,9 +4,19 @@
 
 ### Industrial automation for the rest of us
 
-**An open-source SCADA and industrial automation platform, designed like modern software:**
-Rust from edge to server · Svelte in the browser · TimescaleDB as the historian ·
-one binary, no services by default · configuration in Git · built for AI agents, with no AI inside
+**Mission: plant-grade monitoring for everyone who was priced out of it** —
+the greenhouse, the workshop, the small water plant, the factory tired of
+license renewals. The incumbents had twenty years without competitive
+pressure. IRON is the pressure.
+
+**The goal, stated falsifiably: five minutes from `iron new` to a live
+dashboard.** One open-source Rust binary on a $150 box — no Windows, no
+vendor IDE, no per-tag meter. Unlimited tags, forever, Apache 2.0.
+
+**And one guarantee no vendor designs for: a dashboard bug cannot command
+a machine.** READ and WRITE are separate paths with separate credentials —
+architecture, not code review. Specs are YAML in Git, validated
+deterministically: built for AI agents, with no AI inside.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-concept_→_prototype-orange.svg)](docs/business/roadmap.md)
@@ -129,6 +139,26 @@ bet is architecture and ownership, not out-maturing a thirty-year platform.
 Runs on a Raspberry Pi, a $150 fanless mini-PC, or your existing servers.
 High availability = two cheap boxes + Patroni, not one expensive box.
 [Hardware guide →](docs/guides/hardware.md)
+
+## Works with your PLCs — three positions on the control layer
+
+**Today:** IRON never asks a plant to replace a working controller — it
+speaks Modbus, OPC-UA, and S7 to whatever already runs the machines: CODESYS,
+TwinCAT, Siemens, CLICK
+([ADR 0007](docs/decisions/0007-codesys-today-iron-plc-later.md)).
+
+**Also today, fully open:** OpenPLC + IRON is an open-source stack from relay
+to dashboard — control logic in OpenPLC on a Pi, monitoring in IRON, no
+vendor anywhere. A niche for education, makers, and small sites — factories
+stay on vendor PLCs, honestly.
+
+**The long game, clearly gated as exploration and not a promise:** the
+bottom of the stack deserves the same openness as the top. An open
+IEC 61131-3 runtime in Rust — built on
+[`plc-lang/rusty`](https://github.com/PLC-lang/rusty), starting with
+Structured Text compiled to WASM so PLC programs get what they have never
+had: **unit tests, simulation without hardware, and CI**.
+[The exploration, honestly →](docs/specs/plc-runtime.md)
 
 ## Who it's for
 
