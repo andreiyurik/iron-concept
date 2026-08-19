@@ -71,7 +71,7 @@ instances:
 
 Three lines per pump instead of forty. `iron validate` expands instances and
 validates the result exactly as if the tags were written by hand — the
-expansion is deterministic and inspectable (`iron expand pump_03` prints the
+expansion is deterministic and inspectable (`iron explain --effective pump_03` prints the
 resulting YAML).
 
 ## Normative rules
@@ -93,7 +93,7 @@ an Excel sheet from the electrical designer. IRON treats that as a first-class
 input:
 
 ```bash
-iron import io-list ./P-2024-117_IO_List.xlsx \
+iron generate from-io-list ./P-2024-117_IO_List.xlsx \
   --map "Tag No=name, Description=description, Range Min=range.0, \
          Range Max=range.1, Signal=signal_type, Address=source"
 

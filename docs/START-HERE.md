@@ -30,7 +30,7 @@ beats us today. If you find an error in our domain assumptions, an issue from
 you is worth more than a pull request:
 [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-**💻 "I'm a developer (Rust / Elixir / curious)"**
+**💻 "I'm a developer (Rust / TypeScript / curious)"**
 [Architecture overview](specs/architecture.md) →
 [READ/WRITE separation](specs/read-write-separation.md) →
 [edge agent](specs/edge-agent.md) → the
@@ -40,7 +40,8 @@ context you're missing is in the [glossary](glossary.md), and
 
 **🤖 "I'm an LLM (or pointing one at this repo)"**
 Normative truth lives in `specs/` — one concept per file, one fact in one
-place. Read [glossary.md](glossary.md) first for terminology, then the spec
+place. How agents are meant to interact with IRON itself (CLI/MCP parity,
+context packs, diagnostics) is [specs/agent-interface.md](specs/agent-interface.md). Read [glossary.md](glossary.md) first for terminology, then the spec
 files relevant to your task; `vision/` and `business/` are narrative context,
 not requirements. Frontmatter on every file declares `status`
 (`draft`/`accepted`/`exploration` — nothing is `implemented` yet) and `type`
@@ -78,11 +79,12 @@ docs/
     field-verification.md  iron field — commissioning as a product
     testing.md             unit / integration / simulation / field
     deployment.md          lite / dev / local / cloud / edge
-    extensions.md          WASM plugins + satellites — extend in any language
+    extensions.md          plugins in any language (separate processes) — WASM modules later
+    agent-interface.md     CLI/MCP parity, context packs, diagnostics, no LLM in runtime
     plc-runtime.md         long-term exploration (clearly gated)
 
-  decisions/               ← WHY THIS TECH — one ADR per choice
-  business/                ← model, economics, roadmap
+  decisions/               ← WHY THIS TECH — one ADR per choice (0009–0011: Rust server, Svelte, AI-native surface)
+  business/                ← model, economics, roadmap, deferred (ideas with triggers)
   guides/                  ← hardware selection, TDD practice
 ```
 
@@ -93,7 +95,8 @@ docs/
   → [architecture](specs/architecture.md)
 - **The full argument:** add [read-write-separation](specs/read-write-separation.md),
   [alarm-engine](specs/alarm-engine.md), [field-verification](specs/field-verification.md),
-  [honest-comparison](vision/honest-comparison.md), [roadmap](business/roadmap.md)
+  [honest-comparison](vision/honest-comparison.md), [roadmap](business/roadmap.md),
+  and [what is deferred and why](business/deferred.md)
 
 ## Conventions (for contributors)
 

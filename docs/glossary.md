@@ -24,7 +24,7 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **LOCF** | Last observation carried forward — how sparse (deadband-filtered) history is read: no row means "unchanged", not "unknown" |
 | **Continuous aggregate** | Pre-computed time-weighted rollup (1m/5m/1h/1d) serving long trend queries |
 | **Device type** | Reusable template of tags + alarms + commands + widgets, instantiated per equipment unit (cf. Ignition UDT). Spec: [specs/device-types.md](specs/device-types.md) |
-| **IO list** | The instrument/signal spreadsheet from the electrical designer; importable via `iron import io-list` |
+| **IO list** | The instrument/signal spreadsheet from the electrical designer; importable via `iron generate from-io-list` |
 | **Mimic (mnemonic diagram)** | The P&ID-style operator screen; in IRON, an SVG with `data-iron-*` bindings. Spec: [specs/visual-system.md](specs/visual-system.md) |
 | **Widget** | A pre-built dashboard component (gauge, trend, alarm panel…) bound to tags or commands |
 | **UNS (Unified Namespace)** | The pattern where every data point has one canonical hierarchical address; IRON implements it as NATS subjects |
@@ -37,10 +37,14 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **Online change** | Modifying a running PLC program without stopping the process — the hardest unsolved problem for open runtimes |
 | **Commissioning** | On-site verification that every physical signal matches configuration; IRON's [`iron field`](specs/field-verification.md) workflow |
 | **Drift** | Divergence between the configuration in Git and what actually runs; detected by `iron diff` |
-| **WASM module** | Sandboxed, language-agnostic plugin (derived tags, conversions, notification channels) with manifest-declared capabilities; can never publish commands. Spec: [specs/extensions.md](specs/extensions.md) |
-| **Satellite** | Out-of-process integration (custom driver, analytics, ML) in any language, connected to NATS with its own scoped credentials |
-| **iron lite** | Single-device deployment mode: one artifact, in-process transport, SQLite storage, identical configuration format; upgradeable via `iron migrate --to-full`. Spec: [specs/deployment.md](specs/deployment.md) |
+| **WASM module** | Sandboxed, language-agnostic in-process extension (derived tags, conversions, notification channels) with manifest-declared capabilities; can never publish commands. Spec: [specs/extensions.md](specs/extensions.md) |
+| **Plugin** | A separate program in any language — custom driver, analytics, ML, bridge — connected to IRON with its own scoped credentials; crashes in isolation; can never hold command rights. Declared in `config/plugins/`, scaffolded by `iron new plugin`. Spec: [specs/extensions.md](specs/extensions.md) |
+| **Default deployment (one binary)** | IRON as installed: one `iron` binary, in-process transport, SQLite, no external services; identical configuration format to plant mode, which adds NATS + TimescaleDB when a site outgrows one box. Spec: [specs/deployment.md](specs/deployment.md) |
+| **Deferred** | Designed but not in v1; each idea has a trigger that brings it back — [business/deferred.md](business/deferred.md) |
 | **4–20mA** | The dominant analog signal standard: 4mA = range min, 20mA = max; below 4mA indicates a broken wire |
 | **Modbus / OPC-UA / S7 / MQTT / IO-Link** | Field protocols the edge agent speaks; see [specs/tag-model.md](specs/tag-model.md) for source URI schemes |
 | **OEE** | Overall Equipment Effectiveness = Availability × Performance × Quality; the plant productivity metric. Honest treatment: [business/economics.md](business/economics.md) |
-| **iron-core / iron-web** | The two deliverables: Rust edge runtime / Elixir-Phoenix server (UI, historian, alarms, commands) |
+| **iron-core / iron-server** | The two runtime roles, both Rust, shipped in one `iron` binary: edge runtime / server (UI, historian, alarms, commands, agent interface) |
+| **iron-domain** | The pure, I/O-free crate shared by edge, server, WASM modules, and simulator: tag model, quality, deadband, alarm state machine, command validation |
+| **Plant manifest** | The machine-readable graph derived from the specs that `validate`, `explain`, `diff`, and MCP read; never hand-written — [specs/agent-interface.md](specs/agent-interface.md) |
+| **Context pack** | A compact, per-area extract of the manifest for an agent or reviewer — [specs/agent-interface.md](specs/agent-interface.md) |

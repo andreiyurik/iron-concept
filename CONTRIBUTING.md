@@ -43,12 +43,32 @@ If you want to validate a specific component:
 | Component | Description |
 |---|---|
 | Rust Edge Agent | Modbus TCP reader → deadband filter → NATS publisher |
-| Tag Server | Phoenix GenServer holding tag state + WebSocket broadcast |
+| Tag Engine | Rust sharded tag state + per-subscription WebSocket fan-out |
+| Svelte Widgets | Gauge / trend / alarm panel against the widget contract, quality rendered |
+| MCP Server | `iron validate` exposed as an MCP tool with CLI parity |
 | Visual Editor | Drag-and-drop widget placement on a canvas |
 | Simulator | Mock PLC generating realistic industrial data |
 | TimescaleDB Schema | Hypertables + continuous aggregates + retention policies |
 
 Open an Issue first to discuss scope. A working PoC for any one component is extremely valuable.
+
+### The contribution ladder (once there is code)
+
+Most people who can make IRON better will never write Rust — and should not
+have to. Each rung is a real contribution; pick the one that matches what you
+already know:
+
+| Rung | You contribute | You need to know | Example first step |
+|---|---|---|---|
+| 1 | A **template** or **device type** (YAML) | your plant, not programming | the IO list of a greenhouse you run, as `iron new --template` material |
+| 2 | A **symbol** for the mimic library (SVG with `data-iron-*`) | Inkscape / Figma | a pump that turns green when `running` is true |
+| 3 | A **plugin** in any language (`iron new plugin --lang python`) | Python (or anything with a NATS client) | a dew-point calculator; a driver for a sensor we don't support |
+| 4 | A **verified driver** (`iron test --driver` passes) | the protocol + the plugin above | your Modbus RTU plugin against diagslave, with the recording |
+| 5 | A **core driver or domain change** in Rust | Rust, tests, the specs | graduating rung 4 into `iron-core` |
+
+Rungs 1–3 need no OT background *and* no Rust; rung 5 needs both. The
+ladder, the trust tiers, and the driver harness are specified in
+[docs/specs/extensions.md](docs/specs/extensions.md).
 
 ### Evangelism
 
@@ -69,15 +89,14 @@ This architecture has real challenges. Document them, don't hide them.
 Resist adding components.
 
 **Both audiences.** Every decision should consider both the automation engineer
-who does not know Elixir and the developer who does not know Modbus.
+who does not know Rust and the developer who does not know Modbus.
 
 ---
 
 ## Language
 
-Issues, PRs, and discussions in English or Russian are both welcome.
-When IRON has code, it will use English identifiers and comments.
-Documentation is maintained in both languages.
+Documentation is English; issues and discussions in English or Russian are
+welcome. When IRON has code, it will use English identifiers and comments.
 
 ---
 

@@ -7,58 +7,68 @@ depends-on: [architecture, cli, security]
 # Deployment
 
 IRON runs on your hardware, in your network, under your control. Cloud is
-optional — not the default.
+optional — not the default. And the default is **one binary, no services**:
 
 ```
-Mode 0 — Lite           iron new --lite             one artifact, one device, no external services
-Mode 1 — Development    iron dev                    Docker Compose, local machine
-Mode 2 — Local server   iron deploy --target local  Kamal 2, LAN server (production default)
-Mode 3 — Cloud (opt.)   iron deploy --target cloud  Kamal 2, any VPS
-Mode 4 — Edge (OT)      iron deploy --target edge   Kamal 2, Pi / mini-PC in the cabinet
+Default    iron new && iron dev / iron server      one binary · SQLite · in-process bus · no Docker, no NATS, no Postgres
+Plant      iron deploy --target plant              same binary + NATS JetStream + TimescaleDB · Kamal 2 · LAN server
+Edge       iron deploy --target edge-01            the edge role on a Pi / mini-PC in the OT zone · Kamal 2
+Cloud      iron deploy --target cloud              optional VPS · Kamal 2
 ```
 
-Modes 2–4 use identical tooling — [Kamal 2](https://kamal-deploy.org)
-([decision rationale](../decisions/0006-kamal-for-deployment.md)). Only the
-target IP and network location differ. All modes can run simultaneously.
+The single binary is not a "lite edition" — it is IRON. Plant mode is the
+same binary told where the broker and the database are, for when a site
+outgrows one box. Rails ships SQLite by default and Postgres when you need
+it; IRON does the same ([ADR 0009](../decisions/0009-rust-for-the-server.md)).
 
-## Mode 0 — `iron lite` (single device, zero services)
+## Default — one binary, zero services
 
-The full stack (Compose, NATS, TimescaleDB) is the right shape for a plant —
-and the wrong shape for a greenhouse. A Level 1 user
-([personas](../vision/personas.md), [hardware Level 1](../guides/hardware.md))
-gets one installable artifact and zero operational surface:
+A greenhouse, a workshop, a pump station, and a developer's laptop all get the
+same thing: one installable artifact and zero operational surface.
 
 ```bash
-iron new greenhouse --lite
-iron run                     # one process tree on the Pi; dashboard on :4000
+iron new greenhouse && cd greenhouse
+iron dev                     # simulator on, hot reload, dashboard on :4000
+iron server                  # the same thing on the Pi, pointed at real hardware
 ```
 
-What changes inside — and what deliberately does not:
+What changes when a site moves to plant mode — and what deliberately does not:
 
-| | lite | full |
+| | default (one binary) | plant |
 |---|---|---|
-| Transport | In-process channel (no NATS) | NATS JetStream |
+| Transport | In-process channel | NATS JetStream |
 | Storage | SQLite (same logical schema) | TimescaleDB |
-| Processes | iron-core + iron-web in one supervised artifact | Separate containers/hosts |
+| Processes | edge + server + UI in one process | edge on OT hosts, server on the LAN, separate containers |
 | Tag specs, commands, alarms, UI, CLI | **identical** | **identical** |
-| Scope ceiling | ~2,000 tags, one device, no HA | Plant scale |
+| Scope ceiling | ~2,000 tags, one host, no HA | plant scale, HA |
 
 Normative rules:
 
 - The configuration format is byte-identical between modes. `iron validate`
   output for a project MUST NOT depend on the mode.
-- `iron migrate --to-full` converts a lite deployment in place: same YAML,
-  history exported into TimescaleDB, nothing relearned. Lite is a starting
-  point, never a trap.
-- Lite preserves the architectural invariants that matter at any size:
-  READ/WRITE separation (in-process, the command executor remains a distinct
-  module behind the same Command Service API), quality semantics, append-only
-  command journal, LOCF history semantics.
-- Lite intentionally trades the "one database" principle
+- `iron deploy --target plant` from a single-binary site migrates in place:
+  same YAML, history exported into TimescaleDB, nothing relearned. The
+  default is a starting point, never a trap.
+- The default mode preserves the architectural invariants that matter at any
+  size: READ/WRITE separation (in-process, the command executor remains a
+  distinct module behind the same Command Service API), quality semantics,
+  append-only command journal, LOCF history semantics.
+- The default intentionally trades the "one database" principle
   ([ADR 0004](../decisions/0004-timescaledb.md)) for the "five minutes to
   first dashboard" principle — at 40 sensors, operational simplicity
-  outranks engine uniformity. Rails ships SQLite in development for the same
-  reason.
+  outranks engine uniformity.
+
+## Development
+
+`iron dev` is the default mode plus the simulator plus hot reload
+([cli.md](cli.md)). It needs nothing installed but the `iron` binary — no
+Docker, no Windows-vs-Linux difference, no services. This is the five-minute
+path and it is the acceptance test of every release.
+
+`iron dev --plant` starts the generated Compose stack (`iron_server`,
+`iron_core` with `SIMULATE: true`, `timescaledb`, `nats -js`) for developers
+who need to exercise the plant topology locally. It is the exception, not
+the entry point.
 
 ## Why local-first
 
@@ -68,19 +78,10 @@ Normative rules:
 - A $150 mini-PC or an existing office PC is a fully capable IRON server for
   most plants (sizing: [guides/hardware.md](../guides/hardware.md))
 
-## Mode 1 — Development
+## Plant — LAN server with NATS and TimescaleDB
 
-```bash
-iron new myplant && cd myplant && iron dev
-# → http://localhost:4000 with simulated data
-```
-
-`iron dev` starts the generated Compose stack: `iron_web`, `iron_core`
-(`SIMULATE: true`), `timescaledb`, `nats -js`. No PLC required.
-
-## Mode 2 — Local server (production default)
-
-Deploy to any Linux machine on the plant network.
+Deploy to any Linux machine on the plant network when a site outgrows one
+box: more than one host, more than ~2,000 tags, or HA.
 
 ```yaml
 # config/deploy.yml
@@ -93,8 +94,8 @@ proxy:
   ssl: false                  # LAN; enable with a domain + cert
 registry: { server: ghcr.io, username: you, password: [KAMAL_REGISTRY_PASSWORD] }
 env:
-  clear: { PHX_HOST: iron.local, NATS_URL: "nats://nats:4222" }
-  secret: [SECRET_KEY_BASE, DATABASE_URL]
+  clear: { IRON_HOST: iron.local, NATS_URL: "nats://nats:4222" }
+  secret: [IRON_SECRET_KEY, DATABASE_URL]
 accessories:
   db:   { image: timescale/timescaledb:latest-pg16, host: 192.168.1.100,
           port: "127.0.0.1:5432:5432", volumes: ["/var/lib/iron/postgres:/var/lib/postgresql/data"] }
@@ -107,7 +108,7 @@ Secrets live in `.kamal/secrets` (gitignored). Then:
 
 ```bash
 kamal setup                  # first time: installs Docker, starts everything
-iron deploy --target local   # subsequent: zero-downtime
+iron deploy --target plant   # subsequent: zero-downtime
 kamal app logs --since 1h
 kamal rollback               # instant rollback
 ```
@@ -121,6 +122,13 @@ Deploy contract:
   migrations not flagged as such.
 - Every deploy stamps the running config with its Git SHA — this is what
   `iron diff` checks against ([cli.md](cli.md)).
+
+### Split roles (deferred)
+
+The same binary can later run as `iron server --role ui` in a DMZ with no
+command credentials and `--role core` in the protected zone — a stronger form
+of the contour rule in [security.md](security.md). Deferred, with its
+trigger, in [business/deferred.md](../business/deferred.md).
 
 ### High availability
 
@@ -137,7 +145,7 @@ accessories:
 Two Beelink EQ12 units ≈ $300 total. That is the honest answer to "what if the
 server dies".
 
-## Mode 3 — Cloud (optional)
+## Cloud (optional)
 
 Same config, public IP, `ssl: true` (automatic Let's Encrypt). Use for remote
 dashboards, multi-site management, or integrator-managed service. A cloud
@@ -146,7 +154,7 @@ it stores nothing.
 
 Reference: Hetzner AX41 (€38/mo) or two for HA (€76/mo).
 
-## Mode 4 — Edge agent (OT zone)
+## Edge — the edge role in the OT zone
 
 ```yaml
 servers:
@@ -167,8 +175,11 @@ iron deploy --target edge-01
 # SQLite buffer preserved across restarts — no data loss
 ```
 
-For harsh environments, an alternative packaging is Nerves (immutable firmware,
-A/B partition rollback) — see [guides/hardware.md](../guides/hardware.md).
+For harsh environments, an alternative packaging is an immutable firmware
+image with A/B partition rollback (Yocto/Buildroot + RAUC or Mender-style
+OTA) — see [guides/hardware.md](../guides/hardware.md). The `iron` binary is
+static and has no runtime dependencies, which is what makes that packaging
+cheap.
 
 ## Air-gapped installation
 
@@ -185,14 +196,14 @@ docker load < iron-core-arm64.tar.gz
 
 ## Environment variables
 
-### iron-web
+### iron-server
 
 | Variable | Required | Description |
 |---|---|---|
-| `SECRET_KEY_BASE` | ✅ | Phoenix secret (`mix phx.gen.secret`) |
+| `IRON_SECRET_KEY` | ✅ | Session/token signing secret (`iron secret generate`) |
 | `DATABASE_URL` | ✅ | PostgreSQL connection string |
 | `NATS_URL` | ✅ | NATS server |
-| `PHX_HOST` | ✅ | Hostname for cookie security |
+| `IRON_HOST` | ✅ | Hostname for cookie security |
 | `IRON_TELEGRAM_TOKEN` | — | Alarm notification bot |
 | `IRON_ADMIN_EMAIL` | — | Initial admin account on first boot |
 

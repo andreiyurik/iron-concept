@@ -32,12 +32,12 @@
   </g>
   <text x="75"  y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#e8f5e9" font-family="ui-monospace, Menlo, monospace">iron new</text>
   <text x="75"  y="161" text-anchor="middle" font-size="8.5" fill="#9e9e9e">scaffold project</text>
-  <text x="205" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#e8f5e9" font-family="ui-monospace, Menlo, monospace">iron simulate</text>
-  <text x="205" y="161" text-anchor="middle" font-size="8.5" fill="#9e9e9e">fake the signals</text>
-  <text x="335" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#e8f5e9" font-family="ui-monospace, Menlo, monospace">iron dev</text>
-  <text x="335" y="161" text-anchor="middle" font-size="8.5" fill="#9e9e9e">live dashboard</text>
-  <text x="465" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#e8f5e9" font-family="ui-monospace, Menlo, monospace">iron validate</text>
-  <text x="465" y="161" text-anchor="middle" font-size="8.5" fill="#9e9e9e">check every spec</text>
+  <text x="205" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#e8f5e9" font-family="ui-monospace, Menlo, monospace">iron dev</text>
+  <text x="205" y="161" text-anchor="middle" font-size="8.5" fill="#9e9e9e">live dashboard, simulated</text>
+  <text x="335" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#e8f5e9" font-family="ui-monospace, Menlo, monospace">iron validate</text>
+  <text x="335" y="161" text-anchor="middle" font-size="8.5" fill="#9e9e9e">check every spec</text>
+  <text x="465" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#e8f5e9" font-family="ui-monospace, Menlo, monospace">iron test --sim</text>
+  <text x="465" y="161" text-anchor="middle" font-size="8.5" fill="#9e9e9e">run the scenarios</text>
 
   <!-- left arrows -->
   <line x1="132" y1="146" x2="147" y2="146" stroke="#66bb6a" stroke-width="2" marker-end="url(#gGreen)"/>

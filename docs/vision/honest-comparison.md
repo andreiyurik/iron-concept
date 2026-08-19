@@ -28,7 +28,7 @@ Where IRON differs by design, not by claim of superiority:
 |---|---|---|
 | License | Proprietary, ~$10k+ per server, modules priced separately | Apache 2.0, $0 |
 | Core workflow | Designer GUI first; files underneath | CLI and plain text first; GUI on top |
-| Scripting | Jython 2.7 embedded throughout | Elixir/Rust extension points, YAML for config |
+| Scripting | Jython 2.7 embedded throughout | Plugins in any language (separate processes, scoped credentials), YAML for config |
 | Edge | Java gateway (Edge product) | Single Rust binary, SQLite buffer |
 | Architecture | Monolithic gateway | Separated edge/broker/server, READ/WRITE split |
 | Commissioning | Not addressed | [`iron field`](../specs/field-verification.md) |
@@ -176,6 +176,7 @@ it with the legend in mind — and read the **last row first**.
 | Broker-centric / Unified Namespace | 🟢 | ✅ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ |
 | READ/WRITE separation as architecture | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Audited command path (authn+authz+log on every write) | 🟢 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ |
+| Open agent interface (MCP) with CLI parity, no LLM inside the product | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ⚠️ |
 | **OT features** | | | | | | | | |
 | ISA-18.2-grade alarm management | 🟢 | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Historian with full / open SQL | 🟢 | ✅ | ⚠️ | ⚠️ | ✅ | ⚠️ | ✅ | ❌ |
@@ -198,6 +199,13 @@ How to read this table honestly:
   and field verification as a product. Those are the rows worth building first —
   the capabilities no incumbent offers, not the ones where IRON merely catches
   up.
+- **The agent-interface row is about openness, not "has AI".** Several
+  vendors ship embedded copilots; those are closed assistants inside a GUI.
+  The row asks whether an external agent can drive the platform through an
+  open, documented interface with the same power as the CLI — and whether
+  the product itself stays free of any model
+  ([agent-interface.md](../specs/agent-interface.md)). Community or
+  early-stage MCP bridges exist around Node-RED and UMH, hence ⚠️.
 - The incumbents are strong where the table can't show it: install base,
   hardware integration, decades of edge cases handled, training ecosystems, and
   regulatory track record. None of that is copied quickly, and IRON's plan

@@ -5,8 +5,8 @@
 ### Industrial automation for the rest of us
 
 **An open-source SCADA and industrial automation platform, designed like modern software:**
-Rust at the edge · Phoenix LiveView in the browser · TimescaleDB as the historian ·
-one CLI · configuration in Git · simulation before hardware
+Rust from edge to server · Svelte in the browser · TimescaleDB as the historian ·
+one binary, no services by default · configuration in Git · built for AI agents, with no AI inside
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-concept_→_prototype-orange.svg)](docs/business/roadmap.md)
@@ -24,10 +24,10 @@ one CLI · configuration in Git · simulation before hardware
 ---
 
 ```bash
-iron new myplant && cd myplant
-iron dev                      # live dashboard with simulated sensors — minutes, not months
+iron new myplant --template greenhouse && cd myplant
+iron dev                      # live dashboard with simulated sensors — one binary, no Docker, no services
 iron validate                 # spec errors caught before they reach the plant floor
-iron deploy --target local    # zero-downtime deploy to a $150 mini-PC on your LAN
+iron deploy --target edge-01  # zero-downtime deploy to a $150 mini-PC in the cabinet
 iron field                    # commissioning checklist as a product, results in Git
 ```
 
@@ -36,12 +36,14 @@ workshops** — without six-figure licenses, per-tag pricing, Windows-only
 runtimes, or a vendor between you and your own plant.
 
 > 📐 **Where the project stands:** IRON is in its architecture phase — this
-> repository is a complete engineering blueprint (15 normative specs, 7
+> repository is a complete engineering blueprint (16 normative specs, 11
 > decision records, honest competitive analysis), published openly *before*
 > the code, the way serious infrastructure gets built. The prototype
 > (`iron new` → Modbus TCP → live dashboard) is the current milestone.
 > **This is the best moment to influence the design** — and the earliest
-> possible moment to say "I was here before v0.1".
+> possible moment to say "I was here before v0.1". The first release is
+> deliberately small; what waits, and what brings it back, is in
+> [deferred.md](docs/business/deferred.md).
 
 ---
 
@@ -58,10 +60,10 @@ proven technology into one coherent, opinionated, joyful-to-use stack — and
 make the right thing the easy thing.
 
 ```
-PLCs & sensors ──► iron-core ──────► NATS JetStream ──────► iron-web ──► any browser
-Modbus·OPC-UA·S7   Rust edge agent   unified namespace      Phoenix LiveView · alarms
+PLCs & sensors ──► iron-core ──────► NATS JetStream ──────► iron-server ──► any browser
+Modbus·OPC-UA·S7   Rust edge agent   unified namespace      Rust · Svelte UI · alarms
                    deadband·buffer   at-least-once·replay   TimescaleDB historian
-                   local alarms                             audited command path
+                   local alarms                             audited command path · MCP
 ```
 
 **How one tag makes the round trip** — and why a dashboard can never command a
@@ -81,6 +83,7 @@ long-term exploration drawn dashed:
 | 🔒 **READ/WRITE separation as architecture** | A dashboard bug *cannot* command a machine — separate code paths, separate broker permissions, separate network rules. [spec →](docs/specs/read-write-separation.md) |
 | 🛰️ **Intelligence at the edge** | The Rust agent filters, buffers, and evaluates alarms next to the PLC — and keeps working when the network dies. [spec →](docs/specs/edge-agent.md) |
 | 📋 **Specs, not click-marathons** | Tags, alarms, dashboards — plain YAML in Git. Reviewable, diffable, AI-generatable, deterministically validated. [spec →](docs/vision/spec-driven.md) |
+| 🤖 **Built for agents — no AI inside** | Every CLI command is also an MCP tool over the same core; validator errors are written as fix prompts; context packs per plant area. The product never calls a model, and a model is never on the WRITE path. [spec →](docs/specs/agent-interface.md) |
 | 🧪 **Simulation-first** | Build and test a full plant screen with zero hardware. The simulator is the same binary, not a toy. [spec →](docs/specs/testing.md) |
 | ✅ **Commissioning as a product** | `iron field` turns signal checkout — today's Excel-and-paper ritual — into a guided, audited, Git-versioned workflow. **No other platform has this.** [spec →](docs/specs/field-verification.md) |
 | 📉 **Drift detection** | `iron diff` proves the plant runs exactly what Git says. Remote fleet maintenance for integrators. [spec →](docs/specs/cli.md) |
@@ -103,20 +106,23 @@ architecture — honestly. **Read the last row first.**
 | CLI-first, no mandatory GUI | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
 | READ/WRITE separation as architecture | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Field verification / commissioning workflow | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Open agent interface (MCP) with CLI parity | 🟢 | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ⚠️ |
 | **Production-proven & supported today** | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 IRON's column is mostly 🟢 — *targets*, not shipping features — and the last
 row is ❌ on purpose: every incumbent here is mature and IRON is a concept. The
 bet is architecture and ownership, not out-maturing a thirty-year platform.
-[Full 19-capability breakdown, with every vendor credited where it leads →](docs/vision/honest-comparison.md)
+[Full 20-capability breakdown, with every vendor credited where it leads →](docs/vision/honest-comparison.md)
 
 ## Built on boring, proven technology
 
 | Layer | Technology | Why |
 |---|---|---|
 | Edge agent | **Rust** | Memory safety next to PLCs, no GC pauses, single binary, ARM64/x86 — [ADR 0001](docs/decisions/0001-rust-for-edge.md) |
+| Server | **Rust** (same workspace) | One runtime language; `iron-domain` logic written once for edge, server, WASM modules; one `iron` binary = CLI + server + simulator + MCP — [ADR 0009](docs/decisions/0009-rust-for-the-server.md) |
+| Browser UI | **Svelte 5 + TypeScript** | Runes map onto tags, SVG mimics are native, small bundle embedded in the binary — [ADR 0010](docs/decisions/0010-svelte-for-the-ui.md) |
+| Agent surface | **MCP with CLI parity** | Same core, same schemas, same diagnostics; no LLM in the runtime — [ADR 0011](docs/decisions/0011-ai-native-surface.md) |
 | Message bus | **NATS JetStream** | 15MB binary, subject-level auth, replay, unified namespace — [ADR 0003](docs/decisions/0003-nats-jetstream.md) |
-| Server & UI | **Elixir / Phoenix LiveView** | GenServer per tag, supervision trees, real-time UI without a JS framework — [ADR 0002](docs/decisions/0002-elixir-phoenix-liveview.md) |
 | Historian | **TimescaleDB** | It's PostgreSQL — full SQL, compression, continuous aggregates, one backup — [ADR 0004](docs/decisions/0004-timescaledb.md) |
 | Deployment | **Kamal 2** | One command, health-gated, air-gap friendly, no Kubernetes required — [ADR 0006](docs/decisions/0006-kamal-for-deployment.md) |
 
@@ -129,7 +135,7 @@ High availability = two cheap boxes + Patroni, not one expensive box.
 - 🏭 **Automation engineers** drowning in license renewals and binary config files
 - 🔧 **System integrators** who want to own their client relationships, not rent them from a vendor
 - 🌱 **Farmers & makers** who deserve plant-grade monitoring at greenhouse prices
-- 🦀 **Rust & Elixir developers** looking for distributed-systems problems with physical consequences
+- 🦀 **Rust & Svelte developers** looking for distributed-systems problems with physical consequences
 
 Meet [Arman, Zarina, Bakyt and Nikita →](docs/vision/personas.md)
 
@@ -153,9 +159,9 @@ docs/
 ├── START-HERE.md        routes: farmer · engineer · developer · LLM
 ├── glossary.md          shared vocabulary, one definition per term
 ├── vision/              why — problem, beliefs, personas, honest comparison
-├── specs/               what — 15 normative, testable specifications
-├── decisions/           why this tech — 7 ADRs with trade-offs
-├── business/            model · economics · roadmap
+├── specs/               what — 16 normative, testable specifications
+├── decisions/           why this tech — 11 ADRs with trade-offs
+├── business/            model · economics · roadmap · deferred
 └── guides/              hardware selection · TDD practice
 ```
 
