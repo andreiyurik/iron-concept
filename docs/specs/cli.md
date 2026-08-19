@@ -93,6 +93,14 @@ myplant/
 No `docker-compose.yml` by default: the default deployment is one binary
 ([deployment.md](deployment.md)). `iron dev --plant` generates one on demand.
 
+**The complexity budget, stated normatively: a project containing only
+`config/tags/` is a complete project.** It runs, renders an auto-dashboard
+([visual-system.md](visual-system.md)), records history, and raises alarms.
+Everything else — commands, device types, custom dashboards, mimics,
+plugins — is an optional layer a site adds when it needs it, and no future
+feature may introduce a new *required* file. Complexity grows with the
+plant, never greets the newcomer.
+
 ## iron dev
 
 The default mode plus the simulator plus hot reload. **Watches `config/`**:
@@ -206,10 +214,14 @@ iron generate tests reactor_01       # Rust test stubs from the tag spec
 iron generate scenarios reactor_01   # simulation scenarios from alarm specs
 iron generate dashboard reactor_01   # default widgets for every tag
 iron generate object reactor_01 --template chemical_reactor  # full vertical slice
-iron generate from-io-list ./IO_List.xlsx --map "Tag No=name, Address=source, ..."
+iron generate from-io-list ./IO_List.xlsx
 ```
 
-`from-io-list` turns the project IO list into validated tag specs — contract
+`from-io-list` turns the project IO list into validated tag specs. Column
+mapping is interactive by default — the command guesses from headers and
+confirms ("column 'Tag No' → name? [Y/n]"); the `--map "Tag No=name, ..."`
+flag exists for CI and scripts, never as the thing a human must learn first.
+Contract
 in [device-types.md](device-types.md).
 
 ## iron explain

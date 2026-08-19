@@ -37,6 +37,26 @@ rendering the UI any more: [ADR 0009](../decisions/0009-rust-for-the-server.md).
 
 ## Layer 1 — Widget dashboards
 
+### Zero-config first: the auto-dashboard
+
+A project with no `config/dashboards/` still has dashboards. IRON renders a
+default screen per plant area from the tag specs alone: numeric tags get a
+gauge and a sparkline, booleans a status widget, tags with alarms an alarm
+panel, grouped by the plant hierarchy. Convention over configuration, applied
+to the screen itself:
+
+- The auto-dashboard MUST require zero configuration and MUST render every
+  tag of the area — nothing silently hidden.
+- A dashboard YAML file *customizes*; it is never *required*. Creating
+  `config/dashboards/reactor_01.yaml` replaces the auto-dashboard for that
+  area; `iron generate dashboard reactor_01` writes the auto-layout out as a
+  starting point for editing.
+- Auto-dashboards contain display widgets only. Control widgets never appear
+  without an explicit dashboard file — WRITE surfaces are always deliberate
+  ([read-write-separation.md](read-write-separation.md)).
+
+### Custom dashboards
+
 ```yaml
 # config/dashboards/reactor_01.yaml
 title: "Reactor 01 — Overview"
