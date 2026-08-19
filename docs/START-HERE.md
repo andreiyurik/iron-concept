@@ -38,6 +38,18 @@ you is worth more than a pull request:
 context you're missing is in the [glossary](glossary.md), and
 [Nikita's persona](vision/personas.md) explains what's in it for you.
 
+Coming from Rails or any MVC web framework? The discipline transfers; the
+pattern does not — telemetry streams, commands knock on one audited door
+(CQRS taken to the credential level). The rosetta stone:
+
+| Rails | IRON | The difference |
+|---|---|---|
+| Model | Tag (`config/tags/`) | the single source of truth — plus quality, time, and history |
+| View | Dashboards, mimics, widgets | declarative bindings; a widget never computes plant values |
+| Controller action | Command (`config/commands/`) | named, authorized, journaled — and the *only* write path |
+| ActiveRecord | Tag engine + historian | live state + time series, not CRUD |
+| `rails console` | `iron console` | reads are reads; a write is a command, and the command path decides |
+
 **🤖 "I'm an LLM (or pointing one at this repo)"**
 Normative truth lives in `specs/` — one concept per file, one fact in one
 place. How agents are meant to interact with IRON itself (CLI/MCP parity,

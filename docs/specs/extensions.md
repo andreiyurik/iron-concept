@@ -52,7 +52,9 @@ plugin "vibration-ml" (Python):
 - A plugin that publishes tags MUST follow the tag value contract
   (value/quality/timestamp — [tag-model.md](tag-model.md)); `iron validate`
   checks declared plugin tags like any others, and they are first-class:
-  quality, historian, alarms.
+  quality, historian, alarms. Derived tags are also how display logic stays
+  out of the UI — a widget renders values, it never computes them
+  ([visual-system.md](visual-system.md)).
 - Custom *protocol drivers* are plugins by default (any language, crash in
   isolation); drivers graduate into iron-core (Rust) when they prove general
   demand.

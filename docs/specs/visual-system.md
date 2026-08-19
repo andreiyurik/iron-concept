@@ -95,6 +95,13 @@ Normative:
   binary, and a runtime loading mechanism for widgets is *deferred* with its
   trigger in [business/deferred.md](../business/deferred.md). SVG mimics
   cover the "my own picture" need without any code.
+- A widget MUST NOT compute plant-meaningful values. If a number deserves
+  display, it deserves to be a tag — with quality, history, and alarms — and
+  derived tags are the mechanism ([extensions.md](extensions.md)). Widgets
+  own pixels and session state (selection, sort order, trend zoom), nothing
+  else. This is fat-model/skinny-view for the plant floor: a value computed
+  inside a screen exists only on that screen, and two screens will one day
+  compute it differently.
 
 Trend charts are the one non-Svelte runtime dependency (uPlot, 45KB, zero
 deps), fed by the historian's continuous aggregates with LOCF semantics
