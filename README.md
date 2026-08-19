@@ -193,6 +193,9 @@ docs/
 ├── decisions/           why this tech — 11 ADRs with trade-offs
 ├── business/            model · economics · roadmap · deferred
 └── guides/              hardware selection · TDD practice
+
+examples/greenhouse/     a complete site in the target format — 14 tags,
+                         1 command, 1 scenario; the first validator fixture
 ```
 
 ## 🤝 Contributing

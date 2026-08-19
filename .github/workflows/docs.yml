@@ -1,0 +1,14 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint documentation (links, English-only, frontmatter, honesty)
+        run: python3 scripts/lint-docs.py

@@ -1,0 +1,24 @@
+# A cold front moves through at night. Verifies the frost-protection alarms
+# fire in the right order and clear with hysteresis. Format: docs/specs/testing.md.
+name: frost_night
+timeline:
+  - t: 0s
+    set: { site.outdoor_temperature: 4.0, zone_1.air_temperature: 12.0, zone_2.air_temperature: 14.0 }
+  - t: 10s
+    set: { site.outdoor_temperature: -1.0 }        # below freezing outside
+  - t: 20s
+    set: { zone_1.air_temperature: 7.5 }           # zone 1 drifts under LOW (8)
+  - t: 30s
+    set: { zone_2.air_temperature: 4.5 }           # zone 2 under LOW_LOW (5) — seedlings
+  - t: 40s
+    set: { zone_2.air_temperature: 6.5, zone_1.air_temperature: 9.0 }   # heater catches up
+
+assertions:
+  - at: 15s
+    expect: { site.outdoor_temperature.low: active }
+  - at: 25s
+    expect: { zone_1.air_temperature.low: active, zone_2.air_temperature.low_low: normal }
+  - at: 35s
+    expect: { zone_2.air_temperature.low_low: active }    # priority 1
+  - at: 45s
+    expect: { zone_2.air_temperature.low_low: normal, zone_1.air_temperature.low: normal }

@@ -1,0 +1,57 @@
+# Site-wide signals. Outdoor sensor and tank on node 1; statuses on node 2.
+site:
+  outdoor_temperature:
+    source: modbus://gh-node-1/holding/0x000A
+    type: float32
+    unit: "°C"
+    scan_rate: 30s
+    deadband: 0.5
+    range: [-40, 50]
+    alarms:
+      low:
+        limit: 0
+        priority: 2
+        message: "Outdoor below freezing — watch zone temperatures"
+
+  water_tank_level:
+    source: modbus://gh-node-1/holding/0x000C
+    type: float32
+    unit: "%"
+    scan_rate: 60s
+    deadband: 1
+    range: [0, 100]
+    alarms:
+      low:
+        limit: 20
+        priority: 2
+        message: "Water tank low — irrigation at risk"
+      low_low:
+        limit: 5
+        priority: 1
+        message: "Water tank nearly empty — pump dry-run risk"
+
+  irrigation_pump_running:
+    source: modbus://gh-node-2/coil/0x0010
+    type: bool
+    scan_rate: 5s
+
+  mains_power_ok:
+    source: modbus://gh-node-2/coil/0x0011
+    type: bool
+    scan_rate: 5s
+    alarms:
+      # A boolean alarm fires on the configured state; no limit involved.
+      # Priority 1: on battery, heating is off — frost follows within hours.
+      trip:
+        state: false
+        priority: 1
+        message: "Mains power lost — site on battery"
+
+  vent_position:
+    # Feedback for the vent_open command — the READ half of the loop.
+    source: modbus://gh-node-1/holding/0x000E
+    type: float32
+    unit: "%"
+    scan_rate: 5s
+    deadband: 1
+    range: [0, 100]

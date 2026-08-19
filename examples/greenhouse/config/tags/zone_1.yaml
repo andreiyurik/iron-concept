@@ -1,0 +1,74 @@
+# Zone 1 — tomatoes. Sensors on ESP32 node 1 (Modbus TCP).
+zone_1:
+  air_temperature:
+    source: modbus://gh-node-1/holding/0x0000
+    type: float32
+    unit: "°C"
+    scan_rate: 5s
+    deadband: 0.3
+    range: [-10, 60]
+    alarms:
+      low_low:
+        limit: 2
+        priority: 1
+        message: "Zone 1 frost risk — crop damage below 2°C"
+      low:
+        limit: 8
+        priority: 2
+        message: "Zone 1 air temperature low"
+      high:
+        limit: 38
+        priority: 2
+        message: "Zone 1 air temperature high — check vent"
+
+  humidity:
+    source: modbus://gh-node-1/holding/0x0002
+    type: float32
+    unit: "%RH"
+    scan_rate: 10s
+    deadband: 2
+    range: [0, 100]
+    alarms:
+      high:
+        limit: 90
+        priority: 3
+        message: "Zone 1 humidity high — condensation and fungus risk"
+
+  soil_moisture_bed_a:
+    source: modbus://gh-node-1/holding/0x0004
+    type: float32
+    unit: "%"
+    scan_rate: 60s
+    deadband: 1
+    range: [0, 100]
+    alarms:
+      low:
+        limit: 25
+        priority: 2
+        message: "Bed A soil dry — irrigation may have failed"
+
+  soil_moisture_bed_b:
+    source: modbus://gh-node-1/holding/0x0006
+    type: float32
+    unit: "%"
+    scan_rate: 60s
+    deadband: 1
+    range: [0, 100]
+    alarms:
+      low:
+        limit: 25
+        priority: 2
+        message: "Bed B soil dry — irrigation may have failed"
+
+  co2:
+    source: modbus://gh-node-1/holding/0x0008
+    type: uint16
+    unit: "ppm"
+    scan_rate: 30s
+    deadband: 20
+    range: [0, 5000]
+    alarms:
+      high:
+        limit: 1500
+        priority: 3
+        message: "Zone 1 CO2 above enrichment target"

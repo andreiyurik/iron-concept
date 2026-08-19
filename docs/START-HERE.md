@@ -96,6 +96,7 @@ docs/
     plc-runtime.md         long-term exploration (clearly gated)
 
   decisions/               ← WHY THIS TECH — one ADR per choice (0009–0011: Rust server, Svelte, AI-native surface)
+  ../examples/greenhouse/  ← a complete example site in the target format
   business/                ← model, economics, roadmap, deferred (ideas with triggers)
   guides/                  ← hardware selection, TDD practice
 ```

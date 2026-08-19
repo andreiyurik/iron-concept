@@ -83,7 +83,8 @@ alarms:
 
 | Field | Required | Meaning |
 |---|---|---|
-| `limit` | yes | Threshold in engineering units (within tag `range`) |
+| `limit` | yes, analog tags | Threshold in engineering units (within tag `range`) |
+| `state` | yes, `bool` tags | The alarming state (`true` or `false`) — discrete alarms (trip, power loss) have no threshold. Exactly one of `limit`/`state` per alarm |
 | `priority` | yes | 1 (critical) – 4 (low); drives sort order, color, notification policy |
 | `message` | yes | What the operator sees |
 | `deadband` | no | Hysteresis for clearing — prevents chatter at the limit |
@@ -91,7 +92,12 @@ alarms:
 | `cause` / `consequence` / `operator_action` | no | Rationalization; displayed in the alarm detail view |
 
 `iron validate` enforces: limits within range, ordering
-(`low_low < low < high < high_high`), priorities in 1–4.
+(`low_low < low < high < high_high`), priorities in 1–4, and that `limit`
+appears only on analog tags and `state` only on `bool` tags.
+
+*(This discrete-alarm form was surfaced by writing
+[examples/greenhouse](../../examples/greenhouse/README.md) — the example
+exists precisely to catch what the prose missed.)*
 
 ## Alarm flood control
 

@@ -1,0 +1,12 @@
+# The site's single WRITE surface — physically separate from tags/.
+# See docs/specs/command-path.md for field semantics.
+site:
+  vent_setpoint:
+    target: modbus://gh-node-1/holding/0x0010
+    type: float32
+    unit: "%"
+    requires_role: operator
+    limits: [0, 100]           # server rejects outside; the node clamps too
+    max_step: 50               # no slamming from 0 to 100 in one write
+    feedback_tag: site.vent_position
+    feedback_timeout: 30s      # vent motor is slow; no echo in 30s → FAILED

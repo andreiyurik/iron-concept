@@ -1,0 +1,52 @@
+# Zone 2 — seedlings. Sensors on ESP32 node 2 (Modbus TCP).
+zone_2:
+  air_temperature:
+    source: modbus://gh-node-2/holding/0x0000
+    type: float32
+    unit: "°C"
+    scan_rate: 5s
+    deadband: 0.3
+    range: [-10, 60]
+    alarms:
+      low_low:
+        limit: 5
+        priority: 1
+        message: "Zone 2 frost risk — seedlings die below 5°C"
+      high:
+        limit: 32
+        priority: 2
+        message: "Zone 2 air temperature high"
+
+  humidity:
+    source: modbus://gh-node-2/holding/0x0002
+    type: float32
+    unit: "%RH"
+    scan_rate: 10s
+    deadband: 2
+    range: [0, 100]
+
+  soil_moisture_tray_a:
+    source: modbus://gh-node-2/holding/0x0004
+    type: float32
+    unit: "%"
+    scan_rate: 60s
+    deadband: 1
+    range: [0, 100]
+    alarms:
+      low:
+        limit: 35
+        priority: 2
+        message: "Seedling tray A drying out"
+
+  soil_moisture_tray_b:
+    source: modbus://gh-node-2/holding/0x0006
+    type: float32
+    unit: "%"
+    scan_rate: 60s
+    deadband: 1
+    range: [0, 100]
+    alarms:
+      low:
+        limit: 35
+        priority: 2
+        message: "Seedling tray B drying out"
