@@ -119,7 +119,7 @@
   <!-- LAYER 2: Edge Gateway -->
   <rect x="30" y="560" width="840" height="145" rx="12" fill="url(#layer2)" filter="url(#shadow)" opacity="0.95"/>
   <text x="50" y="585" font-size="11" font-weight="700" fill="#fff" letter-spacing="2">LAYER 2</text>
-  <text x="140" y="585" font-size="14" font-weight="700" fill="#fff">Edge Gateway — Rust Agent (iron-core)</text>
+  <text x="140" y="585" font-size="14" font-weight="700" fill="#fff">Edge Gateway — Rust Agent (iron-edge)</text>
 
   <rect x="50" y="600" width="180" height="50" rx="6" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)"/>
   <text x="140" y="620" text-anchor="middle" font-size="11" font-weight="600" fill="#fff">Protocol Translation</text>

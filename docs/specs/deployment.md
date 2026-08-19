@@ -66,7 +66,7 @@ Docker, no Windows-vs-Linux difference, no services. This is the five-minute
 path and it is the acceptance test of every release.
 
 `iron dev --plant` starts the generated Compose stack (`iron_server`,
-`iron_core` with `SIMULATE: true`, `timescaledb`, `nats -js`) for developers
+`iron_edge` with `SIMULATE: true`, `timescaledb`, `nats -js`) for developers
 who need to exercise the plant topology locally. It is the exception, not
 the entry point.
 
@@ -160,7 +160,7 @@ Reference: Hetzner AX41 (€38/mo) or two for HA (€76/mo).
 servers:
   edge:
     hosts: ["192.168.10.5"]          # device in the OT/IT boundary
-    cmd: /app/bin/iron_core
+    cmd: /app/bin/iron_edge
     options: { network: host }       # direct OT network access
     env:
       clear:
@@ -188,10 +188,10 @@ Many OT networks have no internet. The procedure is `docker save` → USB/SCP �
 
 ```bash
 # machine with internet:
-docker pull ghcr.io/getiron/iron-core:0.3.0 --platform linux/arm64
-docker save ghcr.io/getiron/iron-core:0.3.0 | gzip > iron-core-arm64.tar.gz
+docker pull ghcr.io/getiron/iron-edge:0.3.0 --platform linux/arm64
+docker save ghcr.io/getiron/iron-edge:0.3.0 | gzip > iron-edge-arm64.tar.gz
 # transfer, then on the device:
-docker load < iron-core-arm64.tar.gz
+docker load < iron-edge-arm64.tar.gz
 ```
 
 ## Environment variables
@@ -207,7 +207,7 @@ docker load < iron-core-arm64.tar.gz
 | `IRON_TELEGRAM_TOKEN` | — | Alarm notification bot |
 | `IRON_ADMIN_EMAIL` | — | Initial admin account on first boot |
 
-### iron-core
+### iron-edge
 
 | Variable | Required | Description |
 |---|---|---|
@@ -221,7 +221,7 @@ docker load < iron-core-arm64.tar.gz
 ```bash
 kamal app logs --since 10m                      # container won't start
 kamal accessory logs db --since 30m             # database issues
-kamal app exec --host 192.168.10.5 "bin/iron_core nats ping"     # OT→IT firewall, port 4222?
-kamal app exec --host 192.168.10.5 "bin/iron_core modbus ping 192.168.10.100"  # PLC reachable?
+kamal app exec --host 192.168.10.5 "bin/iron_edge nats ping"     # OT→IT firewall, port 4222?
+kamal app exec --host 192.168.10.5 "bin/iron_edge modbus ping 192.168.10.100"  # PLC reachable?
 kamal proxy logs                                # SSL: DNS pointing here? port 80 open?
 ```

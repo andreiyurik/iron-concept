@@ -45,6 +45,9 @@ iron            one binary: CLI + server + simulator + MCP server (ADR 0011)
 ├── iron-domain pure logic — tag model, quality, deadband, ISA-18.2 alarm
 │               state machine, command validation. No I/O, no async, no
 │               framework. Compiles to native AND wasm32.
+├── iron-core   the operations library: manifest derivation, validator,
+│               explain, generate — the one registry that CLI, MCP, and a
+│               future LSP wrap (ADR 0011)
 ├── iron-edge   protocol drivers, local buffer, first-level alarms
 ├── iron-server tag state, historian writer, alarm aggregation, Command
 │               Service, REST, real-time fan-out (axum / tokio)

@@ -20,7 +20,7 @@ Three positions, all held deliberately:
    has or buys — CODESYS on WAGO, TwinCAT on Beckhoff, Siemens S7, CLICK PLUS.
    IRON reads from and writes to them via standard protocols and never asks a
    plant to replace a working, certified controller. Where the controller
-   runs Linux (WAGO, CLICK PLUS), iron-core happily coexists on the same
+   runs Linux (WAGO, CLICK PLUS), iron-edge happily coexists on the same
    hardware, with the vendor runtime owning the scan cycle.
 2. **Today, at the non-critical tier:** open-source PLCs are first-class
    peers. OpenPLC speaks Modbus TCP, so it works with IRON's v1 driver with

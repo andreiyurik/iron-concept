@@ -64,7 +64,7 @@ already know:
 | 2 | A **symbol** for the mimic library (SVG with `data-iron-*`) | Inkscape / Figma | a pump that turns green when `running` is true |
 | 3 | A **plugin** in any language (`iron new plugin --lang python`) | Python (or anything with a NATS client) | a dew-point calculator; a driver for a sensor we don't support |
 | 4 | A **verified driver** (`iron test --driver` passes) | the protocol + the plugin above | your Modbus RTU plugin against diagslave, with the recording |
-| 5 | A **core driver or domain change** in Rust | Rust, tests, the specs | graduating rung 4 into `iron-core` |
+| 5 | A **core driver or domain change** in Rust | Rust, tests, the specs | graduating rung 4 into `iron-edge` |
 
 Rungs 1–3 need no OT background *and* no Rust; rung 5 needs both. The
 ladder, the trust tiers, and the driver harness are specified in

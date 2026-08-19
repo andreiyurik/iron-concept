@@ -85,13 +85,13 @@ test('BAD quality renders a visual warning', async () => {
 
 ## Level 2 — Integration: the chain test
 
-Runs against real NATS + TimescaleDB + iron-core (simulate mode) in Docker
+Runs against real NATS + TimescaleDB + iron-edge (simulate mode) in Docker
 Compose. The most important test in the system traces one signal through every
 layer:
 
 ```
 Simulated sensor value
-  → iron-core: conversion, quality, deadband
+  → iron-edge: conversion, quality, deadband
   → NATS JetStream publish
   → iron-server: tag engine → subscription fan-out → WebSocket frame
   → browser DOM: value visible
@@ -101,7 +101,7 @@ Simulated sensor value
 #[tokio::test]
 #[cfg_attr(not(feature = "integration"), ignore)]
 async fn signal_flows_from_edge_to_browser_full_chain() {
-    let stack = TestStack::up().await;            // NATS + TimescaleDB + iron-core (sim)
+    let stack = TestStack::up().await;            // NATS + TimescaleDB + iron-edge (sim)
     let mut ws = stack.websocket("/dashboard/reactor_01").await;
     stack.simulator.set_tag("reactor_01.temperature", raw(14.4), Quality::Good);
     // 14.4mA on 4–20mA / 0–200°C → 130.0°C

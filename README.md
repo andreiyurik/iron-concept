@@ -70,7 +70,7 @@ proven technology into one coherent, opinionated, joyful-to-use stack — and
 make the right thing the easy thing.
 
 ```
-PLCs & sensors ──► iron-core ──────► NATS JetStream ──────► iron-server ──► any browser
+PLCs & sensors ──► iron-edge ──────► NATS JetStream ──────► iron-server ──► any browser
 Modbus·OPC-UA·S7   Rust edge agent   unified namespace      Rust · Svelte UI · alarms
                    deadband·buffer   at-least-once·replay   TimescaleDB historian
                    local alarms                             audited command path · MCP

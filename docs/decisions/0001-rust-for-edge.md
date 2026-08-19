@@ -15,7 +15,7 @@ critical CVEs in large C/C++ codebases (Google Android, Microsoft MSRC data).
 
 ## Decision
 
-iron-core is written in Rust: memory safety without garbage collection, no GC
+iron-edge (the edge agent) is written in Rust: memory safety without garbage collection, no GC
 pauses in the polling loop, single static binary for trivial air-gapped
 deployment, first-class ARM64/x86 cross-compilation, mature ecosystem for the
 domain (`tokio-modbus`, `opcua`, `ethercrab`, `linux-embedded-hal`).

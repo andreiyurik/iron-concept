@@ -9,7 +9,7 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **Quality** | Per-sample trust marker: `GOOD` / `UNCERTAIN` / `BAD`. Part of the value, not metadata |
 | **Deadband** | Minimum change required to publish a new sample; suppresses noise traffic. Never delays quality changes or alarm-limit crossings |
 | **Scan rate** | Polling interval for a tag (e.g. `1s`) |
-| **Edge agent** | iron-core: the Rust process next to the PLC — polls, converts, filters, buffers, evaluates first-level alarms, executes authorized commands |
+| **Edge agent** | iron-edge: the Rust process next to the PLC — polls, converts, filters, buffers, evaluates first-level alarms, executes authorized commands |
 | **Store-and-forward** | Edge buffering (SQLite) during network loss with ordered replay after reconnect; no data loss across outages |
 | **Heartbeat** | Forced periodic publish (default 60s) so "stable value" is distinguishable from "dead link" |
 | **READ path** | Sensors → edge → broker → storage → UI. Strictly one-directional. Spec: [specs/read-write-separation.md](specs/read-write-separation.md) |
@@ -44,7 +44,8 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **4–20mA** | The dominant analog signal standard: 4mA = range min, 20mA = max; below 4mA indicates a broken wire |
 | **Modbus / OPC-UA / S7 / MQTT / IO-Link** | Field protocols the edge agent speaks; see [specs/tag-model.md](specs/tag-model.md) for source URI schemes |
 | **OEE** | Overall Equipment Effectiveness = Availability × Performance × Quality; the plant productivity metric. Honest treatment: [business/economics.md](business/economics.md) |
-| **iron-core / iron-server** | The two runtime roles, both Rust, shipped in one `iron` binary: edge runtime / server (UI, historian, alarms, commands, agent interface) |
+| **iron-edge / iron-server** | The two runtime roles, both Rust, shipped in one `iron` binary: edge runtime / server (UI, historian, alarms, commands, agent interface) |
+| **iron-core** | The operations library every interface wraps: manifest derivation, validator, explain, generate. CLI, MCP, and a future LSP are thin facades over it — [specs/agent-interface.md](specs/agent-interface.md) |
 | **iron-domain** | The pure, I/O-free crate shared by edge, server, WASM modules, and simulator: tag model, quality, deadband, alarm state machine, command validation |
 | **Plant manifest** | The machine-readable graph derived from the specs that `validate`, `explain`, `diff`, and MCP read; never hand-written — [specs/agent-interface.md](specs/agent-interface.md) |
 | **Context pack** | A compact, per-area extract of the manifest for an agent or reviewer — [specs/agent-interface.md](specs/agent-interface.md) |

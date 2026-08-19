@@ -17,7 +17,7 @@ IRON has a two-layer architecture with a clear boundary between runtime and inte
 └───────────────────────────┬─────────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────────┐
-│  iron-core  (Rust)                                               │
+│  iron-edge  (Rust)                                               │
 │                                                                  │
 │  Edge Agent — see specs/edge-agent.md                            │
 │  • Protocol drivers: Modbus, OPC-UA, S7, MQTT                   │
@@ -44,7 +44,7 @@ IRON has a two-layer architecture with a clear boundary between runtime and inte
                         Browser / Mobile
 ```
 
-Both `iron-core` and `iron-server` are crates in one Cargo workspace and
+Both `iron-edge` and `iron-server` are crates in one Cargo workspace and
 share `iron-domain` — the pure tag/quality/deadband/alarm logic, written
 once, compiled to native and to WASM
 ([ADR 0009](../decisions/0009-rust-for-the-server.md)). The `iron` binary
@@ -53,7 +53,7 @@ contains the CLI, the server, the simulator, and the MCP server
 
 ```mermaid
 graph TD
-    subgraph iron-core ["iron-core (Rust · Edge)"]
+    subgraph iron-edge ["iron-edge (Rust · Edge)"]
         EDGE["Edge Agent\nModbus · OPC-UA · S7 · MQTT\nDeadband · Buffer · Local alarms · WASM"]
     end
 
@@ -79,14 +79,14 @@ graph TD
 
 | Component | Owns | Must never do |
 |---|---|---|
-| Edge agent (iron-core) | Polling, conversion, quality, deadband, buffering, first-level alarm evaluation, executing authorized commands | Originate commands on its own |
+| Edge agent (iron-edge) | Polling, conversion, quality, deadband, buffering, first-level alarm evaluation, executing authorized commands | Originate commands on its own |
 | NATS JetStream | Transport between edge and server, replay, at-least-once delivery | Hold business logic |
 | iron-server | Visualization, historian, alarm aggregation/escalation, RBAC, audit, Command Service, agent interface | Bypass the Command Service for writes |
 | Browser | Display, operator interaction | Talk to the edge or PLC directly |
 
 ## Communication layer
 
-NATS JetStream is the internal message bus between iron-core and iron-server.
+NATS JetStream is the internal message bus between iron-edge and iron-server.
 The rationale for choosing NATS is in [decisions/0003-nats-jetstream.md](../decisions/0003-nats-jetstream.md).
 
 - Subject hierarchy mirrors physical topology: `plant.line_1.reactor_01.temperature`

@@ -4,7 +4,7 @@ type: spec
 depends-on: [tag-model, alarm-engine, read-write-separation]
 ---
 
-# Edge Agent (iron-core)
+# Edge Agent (iron-edge)
 
 The runtime layer. Runs on the factory floor — on the same DIN-rail hardware as
 the PLC, on a Raspberry Pi in the cabinet, or on an x86 mini-PC. It is not a

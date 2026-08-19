@@ -10,7 +10,7 @@ consequence of choosing Rust for the whole runtime — testing is built into the
 toolchain, and the pure `iron-domain` crate has no I/O to mock:
 
 ```bash
-cargo test   # iron-domain, iron-core, iron-server — zero configuration
+cargo test   # iron-domain, iron-edge, iron-server — zero configuration
 npm test     # iron-ui (Vitest) — zero configuration
 ```
 

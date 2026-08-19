@@ -124,7 +124,7 @@ industrial sales). Values alignment over skills; vesting with a cliff is
 non-negotiable.
 
 Grants: Sovereign Tech Fund (€100k+, needs production users — this phase
-unlocks it), Rust Foundation (when iron-core crates publish to crates.io).
+unlocks it), Rust Foundation (when the iron crates publish to crates.io).
 
 **Done when:** 1 production installation with a written case study, 2–3
 regular contributors, first revenue signal, 2,000+ stars.

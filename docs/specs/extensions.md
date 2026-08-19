@@ -56,7 +56,7 @@ plugin "vibration-ml" (Python):
   out of the UI — a widget renders values, it never computes them
   ([visual-system.md](visual-system.md)).
 - Custom *protocol drivers* are plugins by default (any language, crash in
-  isolation); drivers graduate into iron-core (Rust) when they prove general
+  isolation); drivers graduate into iron-edge (Rust) when they prove general
   demand.
 - In the single-binary default deployment there is no NATS; a plugin
   connects to the `iron` process's built-in plugin port with the same
@@ -69,7 +69,7 @@ about who the first contributor is, not about which language is best:
 
 ```bash
 iron new plugin dew_point --lang python   # the audience: automation & data engineers already write Python
-iron new plugin dew_point --lang rust     # the graduation path: a proven plugin moves into iron-core with little rewriting
+iron new plugin dew_point --lang rust     # the graduation path: a proven plugin moves into iron-edge with little rewriting
 ```
 
 Each skeleton is a complete, runnable plugin: the declaration in
@@ -99,7 +99,7 @@ right value, quality, and timing, injects faults (timeout, disconnect,
 out-of-range), and reports diagnostics in the standard format
 ([agent-interface.md](agent-interface.md)). A driver that passes is eligible
 for the `verified` tier below; a driver that proves general demand graduates
-into `iron-core` in Rust.
+into `iron-edge` in Rust.
 
 ### Trust tiers
 
@@ -110,7 +110,7 @@ have to guess:
 |---|---|---|
 | `community` | Declared, validated, runs in isolation with scoped credentials — that is already more than most scripting in SCADA offers | anyone, by publishing |
 | `verified` | Passes `iron test --driver` (or the plugin test harness) in IRON's CI against the reference simulators; pinned version, signed | maintainers, by running the harness |
-| `core` | Part of `iron-core`, Rust, covered by the scaling benchmark and the hardware-in-the-loop bench | maintainers, by merging |
+| `core` | Part of `iron-edge`, Rust, covered by the scaling benchmark and the hardware-in-the-loop bench | maintainers, by merging |
 
 The tier is visible in the declaration and in `iron explain`; a site MAY
 refuse to deploy anything below a chosen tier (`deploy.yml:

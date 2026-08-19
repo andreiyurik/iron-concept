@@ -122,7 +122,7 @@ iron dev --plant                                    # Compose stack with NATS + 
 
 Generators: `sine:min:max:period`, `walk:start:step`, `cycle:...`, `step:...`;
 scenarios are YAML timelines ([testing.md](testing.md)). The simulator is
-the same `iron-core` code with `sim://` sources — not a toy parallel
+the same `iron-edge` code with `sim://` sources — not a toy parallel
 implementation.
 
 ## iron validate

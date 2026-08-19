@@ -53,7 +53,7 @@ programs are the same Structured Text, so the first users of `iron test --sim
 against IRON scenarios years before any IRON runtime exists. That adoption
 (or its absence) is exactly the evidence the Phase 3 gate asks for.
 
-When the runtime runs inside iron-core, every IEC 61131-3 variable is natively
+When the runtime runs inside iron-edge, every IEC 61131-3 variable is natively
 a tag in the NATS namespace — no OPC-UA server, no Modbus gateway between the
 control program and the historian.
 

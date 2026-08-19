@@ -7,7 +7,7 @@ type: decision
 
 ## Context
 
-iron-core (Rust, OT side) and iron-server (Rust, IT side) need a transport that
+iron-edge (Rust, OT side) and iron-server (Rust, IT side) need a transport that
 survives network partitions, replays missed data, runs on a $150 box, and is
 operable by a 5-person integrator — not a platform team.
 

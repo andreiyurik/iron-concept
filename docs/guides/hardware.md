@@ -22,7 +22,7 @@ Levels 1–2: everything on one device          Level 3+: mandatory separation
 ──────────────────────────────────            ─────────────────────────────────
 RevPi / Unipi / Raspberry Pi                  PLC (WAGO, Siemens, …)   x86 IPC
  ├── control logic                             scan cycle 1–10ms   →   iron-server
- ├── iron-core edge agent                      safety logic   OPC-UA   historian
+ ├── iron-edge agent                      safety logic   OPC-UA   historian
  └── iron-server SCADA                         runs if SCADA dies      alarms
 Like Rails dev mode: fine for small plants    The reliability contract of any
                                               serious plant: SCADA down ≠ plant down
@@ -34,7 +34,7 @@ Greenhouse with 10–40 sensors, irrigation, proof of concept, learning.
 
 ```
 Raspberry Pi 4/5 (industrial enclosure, USB SSD — not SD card!)
-  ├── iron-core: reads ESP32 nodes via Modbus RTU, or sensors directly
+  ├── iron-edge: reads ESP32 nodes via Modbus RTU, or sensors directly
   ├── iron-server: dashboard on your phone
   └── TimescaleDB
 
@@ -66,7 +66,7 @@ production guaranteed until 2036. Modular PiBridge I/O: DIO ~$80, AIO ~$120,
 relay ~$80, RS-485 ~$60.
 
 **Option B — Unipi Neuron L533 (~$500):** 36 DI + 4 AI + 4 AO + 14 relays +
-2× RS-485 in one DIN-rail box; exposes I/O via Modbus TCP, so iron-core needs
+2× RS-485 in one DIN-rail box; exposes I/O via Modbus TCP, so iron-edge needs
 no custom driver. The Patron line (eMMC, no SD card) is the production pick.
 
 **Deployment packaging:** Docker + Kamal is the default
@@ -81,12 +81,12 @@ non-negotiable.**
 
 **PLC: WAGO PFC200** — the German industrial standard. 750-series I/O
 (hundreds of variants), CODESYS runtime for control logic, and Linux with
-Docker — so iron-core runs *on the PLC*, beside CODESYS:
+Docker — so iron-edge runs *on the PLC*, beside CODESYS:
 
 ```
 WAGO PFC200
   ├── CODESYS runtime — owns the scan cycle, safety logic, certified
-  └── Docker: iron-core — reads I/O locally, publishes to NATS,
+  └── Docker: iron-edge — reads I/O locally, publishes to NATS,
               evaluates alarms, buffers on outage
 If IRON fails → CODESYS keeps the plant running.
 If the SCADA server fails → CODESYS keeps the plant running.
@@ -111,7 +111,7 @@ as they are; IRON replaces only the proprietary SCADA above them:
 50× Siemens S7-1500 (unchanged)
    │ OPC-UA (native on S7-1500)
    ▼
-x86 IPC: iron-core ──NATS──► x86 IPC: iron-server + TimescaleDB
+x86 IPC: iron-edge ──NATS──► x86 IPC: iron-server + TimescaleDB
 ```
 
 The economics for a 50,000-tag plant: incumbent per-tag licensing reaches
@@ -121,7 +121,7 @@ the control layer, with zero regulatory disturbance.
 
 ## Special cases
 
-- **CLICK PLUS (~$200)** — a PLC with Linux inside: SSH in and run iron-core
+- **CLICK PLUS (~$200)** — a PLC with Linux inside: SSH in and run iron-edge
   on the controller itself. Two processes, one device, OS-level isolation.
 - **BeagleBone Black Industrial** — its PRU coprocessors (200MHz,
   deterministic, independent of Linux) are the only open-source path to hard
