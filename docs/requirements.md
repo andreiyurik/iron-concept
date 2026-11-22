@@ -5,7 +5,7 @@
 > inline. This page exists so a requirement can be found by identifier
 > and so a test can name what it proves.
 
-109 requirements. Test levels are defined in
+116 requirements. Test levels are defined in
 [specs/testing.md](specs/testing.md); `ci` is a static check, `review`
 is not automatically testable.
 
@@ -21,6 +21,12 @@ is not automatically testable.
 | `REQ-CFG-002` | integration | [config-lifecycle](specs/config-lifecycle.md) | **`iron deploy` MUST refuse** to deploy onto a target holding adjustments that the commit being deployed does not contain, and MUST name them. The… |
 | `REQ-CFG-003` | integration | [config-lifecycle](specs/config-lifecycle.md) | **Alarm state survives an apply.** An alarm whose definition did not change MUST keep its state (active, acknowledged, shelved). A deploy must not… |
 | `REQ-CFG-004` | integration | [config-lifecycle](specs/config-lifecycle.md) | An adjustment MUST be limited to exactly these alarm fields, and nothing else: |
+| `REQ-CFG-005` | integration | [config-lifecycle](specs/config-lifecycle.md) | Configuration files MUST be UTF-8 YAML restricted to: block mappings and sequences, single-line flow mappings and sequences for leaf values (`range… |
+| `REQ-CFG-006` | integration | [config-lifecycle](specs/config-lifecycle.md) | Reading a file and writing it back with no edit MUST reproduce it byte-for-byte. |
+| `REQ-CFG-007` | integration | [config-lifecycle](specs/config-lifecycle.md) | An edit operation MUST leave every byte it did not change untouched — comments, ordering, indentation, quoting. |
+| `REQ-CFG-008` | integration | [config-lifecycle](specs/config-lifecycle.md) | An edit operation MUST validate the resulting project and MUST NOT write a result that fails validation; it returns the diagnostics instead. |
+| `REQ-CFG-009` | integration | [config-lifecycle](specs/config-lifecycle.md) | Edit operations write to a project working tree. They never commit, and they MUST NOT run against the configuration of a deployed target: a running… |
+| `REQ-CFG-010` | integration | [config-lifecycle](specs/config-lifecycle.md) | Every program that changes configuration — `iron diff --pull`, `iron generate`, `iron upgrade`, and any future form, binding tool, or agent tool —… |
 | `REQ-CLI-001` | integration | [cli](specs/cli.md) | `iron diff` MUST detect any divergence between the committed spec and the effective running config on every target, and MUST distinguish the two ki… |
 | `REQ-CMD-001` | integration | [command-path](specs/command-path.md) | **The edge enforces the TTL itself.** It executes a command only if `issued_at + ttl` has not passed, measured in server time using the session's c… |
 | `REQ-CMD-002` | integration | [command-path](specs/command-path.md) | Every command MUST be journaled before it is sent. But "journaled" means a **local append-only journal on the iron-server host** (fsync'd file or l… |
@@ -42,6 +48,7 @@ is not automatically testable.
 | `REQ-DRV-009` | integration | [protocol-drivers](specs/protocol-drivers.md) | Addresses are zero-based protocol addresses — what goes on the wire. Datasheet notations such as `40001` or `4x0001` are **not** accepted in a sour… |
 | `REQ-DRV-010` | integration | [protocol-drivers](specs/protocol-drivers.md) | Decoding MUST follow `order`, which names the position of the value's bytes on the wire: `ABCD` (big-endian, the Modbus convention), `CDAB` (word-s… |
 | `REQ-DRV-011` | integration | [protocol-drivers](specs/protocol-drivers.md) | Every value decoded from one response MUST carry the same acquisition timestamp. |
+| `REQ-DRV-012` | integration | [protocol-drivers](specs/protocol-drivers.md) | The driver MUST detect a dead subscription through the protocol's own keep-alive and report it; silence alone is not evidence that a value is uncha… |
 | `REQ-EDG-001` | unit | [edge-agent](specs/edge-agent.md) | The agent MUST publish when `/current − last_published/ >= deadband`. |
 | `REQ-EDG-002` | unit | [edge-agent](specs/edge-agent.md) | The agent MUST publish on any quality change, regardless of deadband. |
 | `REQ-EDG-003` | unit | [edge-agent](specs/edge-agent.md) | The agent MUST publish when the value crosses any alarm limit defined for the tag, regardless of deadband. A value creeping from 179.8 to 180.2 in… |

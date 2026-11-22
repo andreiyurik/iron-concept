@@ -59,6 +59,9 @@ agent (or a human) editing it, these are the rules everything else follows.
   specs describe the contract, never a broker's behavior. Commands are
   at-most-once and never stored.
 - No implicit scaling: a value is converted only by an explicit `scaling`.
+- Programs change configuration only through the `iron-core` edit
+  operations, losslessly; config files stay inside the YAML subset
+  (`docs/specs/config-lifecycle.md`). No anchors or merge keys in examples.
 
 ## Requirements and conformance
 

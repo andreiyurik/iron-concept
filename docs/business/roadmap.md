@@ -66,6 +66,15 @@ single-binary default with no services. Nothing recruits like a working demo,
 and nothing corrects a spec like a running one. Everything the site does not
 need waits in [deferred.md](deferred.md).
 
+**Who v1 is for, stated so it can be held to:** the integrator or engineer
+who is comfortable with text files and Git — [Arman](../vision/personas.md).
+The small site is served *through* that person, who sets it up once. The
+engineer who works only with a mouse is not a v1 user: forms and
+click-to-bind are deferred, and v1's obligation to that user is
+architectural — every configuration edit already goes through one core
+operation set, so a graphical layer has nothing to invent
+([ADR 0014](../decisions/0014-config-edits-as-core-operations.md)).
+
 The vertical slice, deliberately narrow:
 
 - `iron new` → project scaffold → `iron dev` → Svelte dashboard with
@@ -90,6 +99,13 @@ The vertical slice, deliberately narrow:
 - One threshold alarm → Telegram notification
 - Runs on a Raspberry Pi 4; deploys via Kamal to any Linux box
 - `iron validate` for the implemented subset
+- `iron generate from-io-list` — the Excel sheet the engineer already has
+  becomes a validated project and a live auto-dashboard without a line of
+  hand-written YAML ([device-types.md](../specs/device-types.md)). For this
+  audience it is the real front door, so it ships in the first slice
+- Lossless edit operations in `iron-core`
+  ([config-lifecycle.md](../specs/config-lifecycle.md)), with the IO-list
+  import as their first caller
 - **The scaling benchmark — retire the core risk early.** The server
   architecture rests on one hypothesis: sharded tag state + per-subscription
   WebSocket fan-out handles plant scale on modest hardware. Measure it as

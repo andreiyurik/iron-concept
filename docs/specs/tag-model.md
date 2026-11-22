@@ -52,7 +52,7 @@ reactor_01:
 | `derived` | one of `source` / `derived` | An expression over other tags — see [Derived tags](#derived-tags) |
 | `type` | yes | `bool`, `int16`, `int32`, `uint16`, `uint32`, `float32`, `float64` |
 | `unit` | for analog | Engineering unit string, display only |
-| `scan_rate` | no (default `1s`) | Polling interval. Not allowed on derived tags |
+| `scan_rate` | no (default `1s`) | Polling interval, or the requested sampling interval for subscribed protocols ([protocol-drivers.md](protocol-drivers.md)). Not allowed on derived tags |
 | `deadband` | no (default `0`) | Minimum change that triggers a publish — see [edge-agent.md](edge-agent.md) |
 | `range` | for analog | `[min, max]` in engineering units: the values the tag can legitimately take |
 | `scaling` | no | Raw→engineering conversion — see [Scaling](#scaling) |

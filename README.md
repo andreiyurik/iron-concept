@@ -47,7 +47,7 @@ workshops** — without six-figure licenses, per-tag pricing, Windows-only
 runtimes, or a vendor between you and your own plant.
 
 > 📐 **Where the project stands:** IRON is in its architecture phase — this
-> repository is an engineering blueprint (21 normative specs with 109 numbered requirements, 13
+> repository is an engineering blueprint (21 normative specs with 116 numbered requirements, 14
 > decision records, honest competitive analysis), published openly *before*
 > the code, the way serious infrastructure gets built. The prototype
 > (`iron new` → Modbus TCP → live dashboard) is the current milestone.
@@ -198,7 +198,7 @@ docs/
 ├── vision/              why — problem, beliefs, personas, honest comparison
 ├── requirements.md      every MUST, numbered, with the test level that proves it (generated)
 ├── specs/               what — 21 normative, testable specifications
-├── decisions/           why — 13 ADRs with trade-offs
+├── decisions/           why — 14 ADRs with trade-offs
 ├── business/            model · economics · roadmap · deferred
 └── guides/              hardware selection · TDD practice
 
