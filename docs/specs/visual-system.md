@@ -28,7 +28,7 @@ Layer 2 — SVG Mimics (one Svelte Mimic component)    RUNTIME · Phase 2
 
 Layer 1 — Widget Dashboards (Svelte components)      RUNTIME · Phase 1
   Grid of ready-made components, YAML or mouse
-  Covers ~70% of real-world use cases
+  Intended to cover most real-world screens
 ```
 
 A single screen can combine all three. Rationale for one Svelte stack:
@@ -130,7 +130,7 @@ Normative:
   compute it differently. `REQ-VIS-004 unit`
 
 Trend charts are the one non-Svelte runtime dependency (uPlot, 45KB, zero
-deps), fed by the historian's continuous aggregates with LOCF semantics
+deps), fed by the historian's rollups with LOCF semantics
 ([historian.md](historian.md)).
 
 ## Layer 2 — SVG mimics

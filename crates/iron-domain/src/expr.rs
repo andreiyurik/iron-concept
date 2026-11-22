@@ -4,6 +4,8 @@ use crate::{Quality, Sample, Value};
 use std::fmt;
 
 pub const MAX_DEPTH: usize = 64;
+/// Bounds the height of an operator chain, which nesting depth does not.
+pub const MAX_TOKENS: usize = 512;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
@@ -65,6 +67,7 @@ pub enum Type {
 pub enum ErrorKind {
     Syntax,
     TooDeep,
+    TooLong,
     UnknownReference,
     TypeMismatch,
     IfBranches,
@@ -89,11 +92,7 @@ impl fmt::Display for ExprError {
 impl std::error::Error for ExprError {}
 
 fn err<T>(kind: ErrorKind, pos: usize, message: impl Into<String>) -> Result<T, ExprError> {
-    Err(ExprError {
-        kind,
-        pos,
-        message: message.into(),
-    })
+    Err(ExprError { kind, pos, message: message.into() })
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -106,9 +105,7 @@ enum Tok {
     Comma,
 }
 
-const OPS: [&str; 15] = [
-    "||", "&&", "==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "%", "!", "=",
-];
+const OPS: [&str; 15] = ["||", "&&", "==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "%", "!", "="];
 
 fn lex(src: &str) -> Result<Vec<(Tok, usize)>, ExprError> {
     let b = src.as_bytes();
@@ -156,9 +153,7 @@ fn lex(src: &str) -> Result<Vec<(Tok, usize)>, ExprError> {
                 while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_') {
                     i += 1;
                 }
-                let next_is_name = b
-                    .get(i + 1)
-                    .is_some_and(|n| n.is_ascii_alphabetic() || *n == b'_');
+                let next_is_name = b.get(i + 1).is_some_and(|n| n.is_ascii_alphabetic() || *n == b'_');
                 if b.get(i) == Some(&b'.') && next_is_name {
                     i += 1;
                 } else {
@@ -215,12 +210,8 @@ impl Parser {
 
     fn expr(&mut self) -> Result<Expr, ExprError> {
         self.depth += 1;
-        if self.depth > MAX_DEPTH {
-            return err(
-                ErrorKind::TooDeep,
-                self.pos(),
-                "expression is nested too deeply",
-            );
+        if self.depth > MAX_DEPTH + 1 {
+            return err(ErrorKind::TooDeep, self.pos(), "expression is nested too deeply");
         }
         let mut left = self.and()?;
         while self.eat_op(&["||"]).is_some() {
@@ -246,11 +237,7 @@ impl Parser {
         };
         let right = self.sum()?;
         if self.peek_op().is_some_and(|o| CMP.contains(&o)) {
-            return err(
-                ErrorKind::Syntax,
-                self.pos(),
-                "comparisons cannot be chained",
-            );
+            return err(ErrorKind::Syntax, self.pos(), "comparisons cannot be chained");
         }
         let op = match op {
             "==" => BinaryOp::Eq,
@@ -266,11 +253,7 @@ impl Parser {
     fn sum(&mut self) -> Result<Expr, ExprError> {
         let mut left = self.term()?;
         while let Some(op) = self.eat_op(&["+", "-"]) {
-            let op = if op == "+" {
-                BinaryOp::Add
-            } else {
-                BinaryOp::Sub
-            };
+            let op = if op == "+" { BinaryOp::Add } else { BinaryOp::Sub };
             left = Expr::Binary(op, Box::new(left), Box::new(self.term()?));
         }
         Ok(left)
@@ -333,13 +316,7 @@ impl Parser {
                     "ln" => Func::Ln,
                     "log10" => Func::Log10,
                     "if" => Func::If,
-                    _ => {
-                        return err(
-                            ErrorKind::UnknownFunction,
-                            pos,
-                            format!("unknown function '{name}'"),
-                        )
-                    }
+                    _ => return err(ErrorKind::UnknownFunction, pos, format!("unknown function '{name}'")),
                 };
                 let mut args = vec![self.expr()?];
                 while matches!(self.toks.get(self.at), Some((Tok::Comma, _))) {
@@ -354,11 +331,7 @@ impl Parser {
                     _ => args.len() == 1,
                 };
                 if !ok {
-                    return err(
-                        ErrorKind::Arity,
-                        pos,
-                        format!("wrong number of arguments for '{name}'"),
-                    );
+                    return err(ErrorKind::Arity, pos, format!("wrong number of arguments for '{name}'"));
                 }
                 Ok(Expr::Call(func, args))
             }
@@ -377,12 +350,11 @@ impl Parser {
 }
 
 pub fn parse(src: &str) -> Result<Expr, ExprError> {
-    let mut p = Parser {
-        toks: lex(src)?,
-        at: 0,
-        depth: 0,
-        end: src.len(),
-    };
+    let toks = lex(src)?;
+    if toks.len() > MAX_TOKENS {
+        return err(ErrorKind::TooLong, toks[MAX_TOKENS].1, "expression is too long");
+    }
+    let mut p = Parser { toks, at: 0, depth: 0, end: src.len() };
     let expr = p.expr()?;
     if p.at != p.toks.len() {
         return err(ErrorKind::Syntax, p.pos(), "unexpected token");
@@ -416,11 +388,7 @@ impl Expr {
             if e.check(types)? == t {
                 Ok(())
             } else {
-                let name = if t == Type::Number {
-                    "a number"
-                } else {
-                    "a boolean"
-                };
+                let name = if t == Type::Number { "a number" } else { "a boolean" };
                 err(ErrorKind::TypeMismatch, 0, format!("expected {name}"))
             }
         };
@@ -456,11 +424,7 @@ impl Expr {
                 want(&args[0], Type::Bool)?;
                 let t = args[1].check(types)?;
                 if args[2].check(types)? != t {
-                    return err(
-                        ErrorKind::IfBranches,
-                        0,
-                        "both branches of if() must have the same type",
-                    );
+                    return err(ErrorKind::IfBranches, 0, "both branches of if() must have the same type");
                 }
                 Ok(t)
             }
@@ -487,7 +451,7 @@ impl Expr {
         match self {
             Expr::Num { value, .. } => Some(Value::Number(*value)),
             Expr::Bool(b) => Some(Value::Bool(*b)),
-            Expr::Ref(name) => get(name),
+            Expr::Ref(name) => get(name).filter(|v| !matches!(v, Value::Number(n) if !n.is_finite())),
             Expr::Unary(UnaryOp::Neg, a) => finite(-num(a)?),
             Expr::Unary(UnaryOp::Not, a) => Some(Value::Bool(!boolean(a)?)),
             Expr::Binary(op, a, b) => match op {
@@ -542,26 +506,13 @@ impl Expr {
 
     #[must_use]
     pub fn evaluate(&self, inputs: &dyn Fn(&str) -> Option<Sample>) -> Evaluated {
-        let quality = self
-            .refs()
-            .iter()
-            .map(|name| inputs(name).map_or(Quality::Bad, |s| s.quality))
-            .fold(Quality::Good, Quality::worst);
+        let quality = self.refs().iter().map(|name| inputs(name).map_or(Quality::Bad, |s| s.quality)).fold(Quality::Good, Quality::worst);
         if quality == Quality::Bad {
-            return Evaluated {
-                value: None,
-                quality,
-            };
+            return Evaluated { value: None, quality };
         }
         match self.value(&|name| inputs(name).map(|s| s.value)) {
-            Some(value) => Evaluated {
-                value: Some(value),
-                quality,
-            },
-            None => Evaluated {
-                value: None,
-                quality: Quality::Bad,
-            },
+            Some(value) => Evaluated { value: Some(value), quality },
+            None => Evaluated { value: None, quality: Quality::Bad },
         }
     }
 
@@ -583,9 +534,7 @@ impl Expr {
             Expr::Binary(Add | Sub | Mul | Rem, a, b) => a.is_int(param_int) && b.is_int(param_int),
             Expr::Binary(..) => false,
             Expr::Call(Func::Round | Func::Floor | Func::Ceil, _) => true,
-            Expr::Call(Func::Abs | Func::Min | Func::Max | Func::Clamp, args) => {
-                args.iter().all(|a| a.is_int(param_int))
-            }
+            Expr::Call(Func::Abs | Func::Min | Func::Max | Func::Clamp, args) => args.iter().all(|a| a.is_int(param_int)),
             Expr::Call(Func::If, args) => args[1].is_int(param_int) && args[2].is_int(param_int),
             Expr::Call(..) => false,
         }
@@ -600,109 +549,68 @@ pub struct Evaluated {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Param {
-    Number { value: f64, int: bool },
+    /// `int`: written without a fraction, so it prints as `272`, not `272.0`.
+    Number {
+        value: f64,
+        int: bool,
+    },
     Text(String),
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Expanded {
-    Number { value: f64, int: bool },
-    Text(String),
-}
-
-pub fn expand(
-    template: &str,
-    params: &dyn Fn(&str) -> Option<Param>,
-) -> Result<Expanded, ExprError> {
+/// Expands `{…}` groups. A field that is one group producing a number stays
+/// a number; anything else becomes text.
+pub fn expand(template: &str, params: &dyn Fn(&str) -> Option<Param>) -> Result<Param, ExprError> {
+    let number = |name: &str| match params(name) {
+        Some(Param::Number { value, int }) => Some((value, int)),
+        _ => None,
+    };
     let mut out = String::new();
-    let mut rest = template;
-    let mut offset = 0;
-    let mut sole: Option<(f64, bool)> = None;
-    let mut groups = 0;
+    let mut sole = None;
+    let (mut rest, mut offset, mut groups) = (template, 0, 0);
     while let Some(open) = rest.find('{') {
         let Some(len) = rest[open..].find('}') else {
             return err(ErrorKind::Syntax, offset + open, "missing closing brace");
         };
+        let at = offset + open + 1;
+        let fail = |kind, message: String| ExprError { kind, pos: at, message };
+        let expr = parse(&rest[open + 1..open + len]).map_err(|e| ExprError { pos: e.pos + at, ..e })?;
         out.push_str(&rest[..open]);
-        let inner = &rest[open + 1..open + len];
-        let shift = |mut e: ExprError| {
-            e.pos += offset + open + 1;
-            e
-        };
-        let expr = parse(inner).map_err(shift)?;
         groups += 1;
+        offset += open + len + 1;
+        rest = &rest[open + len + 1..];
         if let Expr::Ref(name) = &expr {
             if let Some(Param::Text(text)) = params(name) {
                 out.push_str(&text);
-                offset += open + len + 1;
-                rest = &rest[open + len + 1..];
                 continue;
             }
         }
-        let number = |name: &str| match params(name) {
-            Some(Param::Number { value, int }) => Some((value, int)),
-            _ => None,
-        };
         for name in expr.refs() {
             match params(name) {
                 Some(Param::Number { .. }) => {}
                 Some(Param::Text(_)) => {
-                    return Err(shift(ExprError {
-                        kind: ErrorKind::TypeMismatch,
-                        pos: 0,
-                        message: format!("parameter '{name}' is text and cannot be computed with"),
-                    }))
+                    return Err(fail(ErrorKind::TypeMismatch, format!("parameter '{name}' is text and cannot be computed with")))
                 }
-                None => {
-                    return Err(shift(ExprError {
-                        kind: ErrorKind::UnknownReference,
-                        pos: 0,
-                        message: format!("unknown parameter '{name}'"),
-                    }))
-                }
+                None => return Err(fail(ErrorKind::UnknownReference, format!("unknown parameter '{name}'"))),
             }
         }
-        expr.check(&|name| number(name).map(|_| Type::Number))
-            .map_err(shift)?;
-        let value = match expr.value(&|name| number(name).map(|(v, _)| Value::Number(v))) {
-            Some(Value::Number(v)) => v,
-            Some(Value::Bool(_)) => {
-                return Err(shift(ExprError {
-                    kind: ErrorKind::TypeMismatch,
-                    pos: 0,
-                    message: "an expansion must produce a number or text".into(),
-                }))
-            }
-            None => {
-                return Err(shift(ExprError {
-                    kind: ErrorKind::NoValue,
-                    pos: 0,
-                    message: "the expression has no finite value".into(),
-                }))
-            }
+        expr.check(&|name| number(name).map(|_| Type::Number)).map_err(|e| fail(e.kind, e.message))?;
+        let Some(Value::Number(value)) = expr.value(&|name| number(name).map(|(v, _)| Value::Number(v))) else {
+            return Err(fail(ErrorKind::NoValue, "the expansion has no finite numeric value".into()));
         };
-        let int = expr.is_int(&|name| number(name).is_some_and(|(_, i)| i))
-            && value.fract() == 0.0
-            && value.abs() < 9e15;
-        if int {
-            out.push_str(&format!("{}", value as i64));
-        } else {
-            out.push_str(&format!("{value:?}"));
+        let int = expr.is_int(&|name| number(name).is_some_and(|(_, i)| i)) && value.fract() == 0.0;
+        // Display, not Debug: the lexer has no exponent syntax. Parentheses
+        // keep `-{k}` valid when k is negative.
+        let mut text = format!("{value}");
+        if !int && !text.contains('.') {
+            text.push_str(".0");
         }
-        sole = Some((value, int));
-        offset += open + len + 1;
-        rest = &rest[open + len + 1..];
+        out.push_str(&if value < 0.0 { format!("({text})") } else { text });
+        sole = Some(Param::Number { value, int });
     }
     out.push_str(rest);
     let whole = template.trim();
     match sole {
-        Some((value, int))
-            if groups == 1
-                && whole.starts_with('{')
-                && whole.find('}') == Some(whole.len() - 1) =>
-        {
-            Ok(Expanded::Number { value, int })
-        }
-        _ => Ok(Expanded::Text(out)),
+        Some(n) if groups == 1 && whole.starts_with('{') && whole.find('}') == Some(whole.len() - 1) => Ok(n),
+        _ => Ok(Param::Text(out)),
     }
 }

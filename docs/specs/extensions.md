@@ -58,7 +58,9 @@ plugin "vibration-ml" (Python):
   has no field that could name a command subject.
 - A plugin that publishes tags MUST follow the tag value contract
   (value/quality/timestamp — [tag-model.md](tag-model.md)); `iron validate`
-  checks declared plugin tags like any others, and they are first-class:
+  checks the tags a plugin declares in `config/plugins/` — they have neither
+  `source` nor `derived`, which is required only of tags in `config/tags/` —
+  and they are first-class:
   quality, historian, alarms. Alarms on plugin-published tags are detected by
   the server, like those of any tag no single edge owns
   ([alarm-engine.md](alarm-engine.md)). `REQ-EXT-001 integration`

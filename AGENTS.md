@@ -24,7 +24,7 @@ these are the rules everything else follows.
   per file, with trade-offs; the template is in `docs/decisions/README.md`.
 - **One fact lives in exactly one place** — link, don't copy.
 - Every file in `docs/{specs,decisions,vision,business,guides}/` carries
-  frontmatter: `status:` (`draft`/`accepted`/`superseded`/`exploration`) and
+  frontmatter: `status:` (`draft`/`proposed`/`accepted`/`superseded`/`exploration`) and
   `type:`.
 - **`docs/business/deferred.md` is the parking lot**: ideas kept out of v1,
   each with an explicit return trigger. Never re-add a deferred item to the

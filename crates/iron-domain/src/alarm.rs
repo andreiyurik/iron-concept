@@ -2,6 +2,9 @@
 
 use crate::{Quality, Value};
 
+/// Numeric alarm names, in the order their limits must increase.
+pub const LEVELS: [&str; 4] = ["low_low", "low", "high", "high_high"];
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Condition {
     High(f64),
@@ -18,13 +21,12 @@ pub struct AlarmDef {
 }
 
 impl AlarmDef {
-    /// The direction of a numeric alarm comes from its name (REQ-ALM-004).
+    // REQ-ALM-004
     #[must_use]
     pub fn level(name: &str, limit: f64) -> Option<Condition> {
-        match name {
-            "high" | "high_high" => Some(Condition::High(limit)),
-            "low" | "low_low" => Some(Condition::Low(limit)),
-            _ => None,
+        match LEVELS.iter().position(|l| *l == name)? {
+            0 | 1 => Some(Condition::Low(limit)),
+            _ => Some(Condition::High(limit)),
         }
     }
 }
@@ -42,57 +44,44 @@ pub struct Detector {
 }
 
 impl Detector {
-    pub fn update(
-        &mut self,
-        def: &AlarmDef,
-        t_ms: i64,
-        value: Value,
-        quality: Quality,
-    ) -> Option<Transition> {
-        // REQ-ALM-008: a BAD sample changes nothing and cancels a delay.
-        if quality == Quality::Bad {
-            self.pending_since = None;
-            return None;
+    /// Up to two transitions: a delay that ran out before this sample is
+    /// honoured first (REQ-ALM-007), then the sample itself is judged.
+    pub fn update(&mut self, def: &AlarmDef, t_ms: i64, value: Value, quality: Quality) -> [Option<Transition>; 2] {
+        let done = self.poll(def, t_ms);
+        // REQ-ALM-008: an unreadable sample changes nothing and cancels a delay.
+        let unreadable = quality == Quality::Bad || matches!(value, Value::Number(n) if !n.is_finite());
+        match self.wanted(def, value).filter(|_| !unreadable) {
+            Some(wanted) if wanted != self.active => {
+                self.pending_since.get_or_insert(t_ms);
+                [done, self.poll(def, t_ms)]
+            }
+            _ => {
+                self.pending_since = None;
+                [done, None]
+            }
         }
-        let wanted = self.wanted(def, value)?;
-        if wanted == self.active {
-            self.pending_since = None;
-            return None;
-        }
-        self.pending_since.get_or_insert(t_ms);
-        self.poll(def, t_ms)
     }
 
-    /// Completes a delay that has elapsed by `t_ms` (REQ-ALM-007).
+    // REQ-ALM-007
     pub fn poll(&mut self, def: &AlarmDef, t_ms: i64) -> Option<Transition> {
         let since = self.pending_since?;
-        let delay = if self.active {
-            def.off_delay_ms
-        } else {
-            def.on_delay_ms
-        };
+        let delay = if self.active { def.off_delay_ms } else { def.on_delay_ms };
         if t_ms - since < delay {
             return None;
         }
         self.active = !self.active;
         self.pending_since = None;
-        Some(Transition {
-            active: self.active,
-            t_ms: since + delay,
-        })
+        Some(Transition { active: self.active, t_ms: since + delay })
     }
 
-    // REQ-ALM-005, REQ-ALM-006.
+    // REQ-ALM-005, REQ-ALM-006. With no deadband the clear threshold is the
+    // raise threshold: a value exactly on the limit stays in alarm.
     fn wanted(&self, def: &AlarmDef, value: Value) -> Option<bool> {
         let band = def.deadband;
         Some(match (def.condition, value) {
-            (Condition::High(limit), Value::Number(v)) if self.active && band > 0.0 => {
-                v > limit - band
-            }
+            (Condition::High(limit), Value::Number(v)) if self.active && band > 0.0 => v > limit - band,
             (Condition::High(limit), Value::Number(v)) => v >= limit,
-            (Condition::Low(limit), Value::Number(v)) if self.active && band > 0.0 => {
-                v < limit + band
-            }
+            (Condition::Low(limit), Value::Number(v)) if self.active && band > 0.0 => v < limit + band,
             (Condition::Low(limit), Value::Number(v)) => v <= limit,
             (Condition::State(state), Value::Bool(b)) => b == state,
             _ => return None,

@@ -16,7 +16,8 @@ vendor IDE, no per-tag meter. Unlimited tags, forever, Apache 2.0.
 **And one guarantee no vendor designs for: nothing writes to a machine
 except one audited gate, and only to targets you declared in a file.** A
 display, a trend, an alarm, a formula cannot cause a write — by
-construction, checked in CI, not by code review. Specs are YAML in Git, validated
+construction, not by code review (the CI check on the crate graph arrives
+with the first write path). Specs are YAML in Git, validated
 deterministically: built for AI agents, with no AI inside.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -47,14 +48,15 @@ workshops** — without six-figure licenses, per-tag pricing, Windows-only
 runtimes, or a vendor between you and your own plant.
 
 > 📐 **Where the project stands:** IRON is in its architecture phase — this
-> repository is an engineering blueprint (21 normative specs with 116 numbered requirements, 14
+> repository is an engineering blueprint (21 normative specs with [numbered requirements](docs/requirements.md), 14
 > decision records, honest competitive analysis), published openly *before*
 > the code, the way serious infrastructure gets built. The prototype
 > (`iron new` → Modbus TCP → live dashboard) is the current milestone.
 > Two commands exist: `iron validate` checks a project against the specs,
-> and `iron test --sim` runs its simulation scenarios; both pass the
-> [conformance vectors](conformance/README.md). Nothing else runs yet — no
-> server, no dashboard, no device I/O.
+> and `iron test --sim` runs its simulation scenarios. They are tested
+> against the [conformance vectors](conformance/README.md) that have an
+> implementation behind them. Nothing else runs yet — no server, no
+> dashboard, no device I/O.
 > **This is the best moment to influence the design** — and the earliest
 > possible moment to say "I was here before v0.1". The first release is
 > deliberately small; what waits, and what brings it back, is in
@@ -102,7 +104,7 @@ long-term exploration drawn dashed:
 | 🔒 **READ/WRITE separation as architecture** | Only the Command Service can write, only to targets declared in `config/commands/`, only after auth and a journal entry. Enforced in code in every deployment; plant mode adds separate broker permissions and network rules. The spec also says what this does *not* stop. [spec →](docs/specs/read-write-separation.md) |
 | 🛰️ **Intelligence at the edge** | The Rust agent filters, buffers, and evaluates alarms next to the PLC — and keeps working when the network dies. [spec →](docs/specs/edge-agent.md) |
 | 📋 **Specs, not click-marathons** | Tags, alarms, dashboards — plain YAML in Git. Reviewable, diffable, AI-generatable, deterministically validated. Computed values are one-line formulas in [one small expression language](docs/specs/expressions.md), not scripts. [spec →](docs/vision/spec-driven.md) |
-| 🤖 **Built for agents — no AI inside** | Every CLI command is also an MCP tool over the same core; validator errors are written as fix prompts; context packs per plant area. The product never calls a model, and a model is never on the WRITE path. [spec →](docs/specs/agent-interface.md) |
+| 🤖 **Built for agents — no AI inside** | CLI and MCP are two faces of one core — v1 exposes `validate`, `explain`, and `generate` to agents, never commands or deploys; validator errors are written as fix prompts; context packs per plant area. The product never calls a model, and a model is never on the WRITE path. [spec →](docs/specs/agent-interface.md) |
 | 🧪 **Simulation-first** | Build and test a full plant screen with zero hardware. The simulator is the same binary, not a toy. [spec →](docs/specs/testing.md) |
 | ✅ **Commissioning as a product** | `iron field` turns signal checkout — today's Excel-and-paper ritual — into a guided, audited, Git-versioned workflow. **No other platform has this.** [spec →](docs/specs/field-verification.md) |
 | 📉 **Drift detection** | `iron diff` shows whether the plant runs what Git says — and when someone tuned an alarm on site at night, who, why, and how to pull it back into Git. Remote fleet maintenance for integrators. [spec →](docs/specs/config-lifecycle.md) |
@@ -153,12 +155,13 @@ failover is [not designed yet](docs/specs/deployment.md).
 
 ## Works with your PLCs — three positions on the control layer
 
-**Today:** IRON never asks a plant to replace a working controller — it
-speaks Modbus, OPC-UA, and S7 to whatever already runs the machines: CODESYS,
+**By design:** IRON never asks a plant to replace a working controller — it
+is meant to speak Modbus, OPC-UA, and S7 (Modbus TCP first; none is built
+yet) to whatever already runs the machines: CODESYS,
 TwinCAT, Siemens, CLICK
 ([ADR 0007](docs/decisions/0007-codesys-today-iron-plc-later.md)).
 
-**Also today, fully open:** OpenPLC + IRON is an open-source stack from relay
+**Fully open, once IRON reads Modbus:** OpenPLC + IRON is an open-source stack from relay
 to dashboard — control logic in OpenPLC on a Pi, monitoring in IRON, no
 vendor anywhere. A niche for education, makers, and small sites — factories
 stay on vendor PLCs, honestly.

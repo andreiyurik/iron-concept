@@ -76,7 +76,8 @@ hostname or IP address. Connection parameters, the exact Modbus address
 syntax (tables, zero-based addresses, bit access, byte order), and how polls
 are grouped are specified in [protocol-drivers.md](protocol-drivers.md).
 The table above lists the schemes IRON intends to support; only those with
-an addressing section in that document are implemented.
+an addressing section in that document are specified in enough detail to
+implement; none performs device I/O yet.
 
 ## Invariants (enforced by `iron validate`)
 

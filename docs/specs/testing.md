@@ -49,7 +49,7 @@ fn converts_midpoint() { assert_eq!(convert_ai(12.0, 4.0, 20.0, 0.0, 200.0), 100
 
 #[test]
 fn out_of_range_raw_clamps_and_degrades_quality() {
-    let s = convert(3.5 /* broken wire */);
+    let s = convert(3.5 /* broken wire */, scaling(raw: [4, 20], engineering: [0, 200]));
     assert_eq!(s.value, 0.0);
     assert_eq!(s.quality, Quality::Uncertain);
 }

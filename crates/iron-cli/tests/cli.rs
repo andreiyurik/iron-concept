@@ -4,22 +4,12 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn iron(args: &[&str]) -> (i32, String, String) {
-    let out = Command::new(env!("CARGO_BIN_EXE_iron"))
-        .args(args)
-        .output()
-        .unwrap();
-    (
-        out.status.code().unwrap(),
-        String::from_utf8(out.stdout).unwrap(),
-        String::from_utf8(out.stderr).unwrap(),
-    )
+    let out = Command::new(env!("CARGO_BIN_EXE_iron")).args(args).output().unwrap();
+    (out.status.code().unwrap(), String::from_utf8(out.stdout).unwrap(), String::from_utf8(out.stderr).unwrap())
 }
 
 fn greenhouse() -> String {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../examples/greenhouse")
-        .to_string_lossy()
-        .into_owned()
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/greenhouse").to_string_lossy().into_owned()
 }
 
 #[test]
@@ -72,10 +62,7 @@ fn environment_and_usage_errors_exit_two() {
 fn simulation_scenarios_run_and_report() {
     let (code, out, _) = iron(&["test", "--sim", &greenhouse()]);
     assert_eq!(code, 0, "{out}");
-    assert!(
-        out.contains("✅ frost_night") && out.contains("1 passed"),
-        "{out}"
-    );
+    assert!(out.contains("✅ frost_night") && out.contains("1 passed"), "{out}");
     let (_, json, _) = iron(&["test", "--sim", &greenhouse(), "--json"]);
     let doc: serde_json::Value = serde_json::from_str(&json).unwrap();
     assert_eq!(doc["status"], "ok");

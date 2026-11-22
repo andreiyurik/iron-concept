@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Error,
@@ -38,9 +38,21 @@ pub struct Rule {
     pub docs: &'static str,
 }
 
+impl Rule {
+    /// The code carries the severity: `IRON-W…` is a warning.
+    #[must_use]
+    pub fn severity(&self) -> Severity {
+        if self.code.starts_with("IRON-W") {
+            Severity::Warning
+        } else {
+            Severity::Error
+        }
+    }
+}
+
 macro_rules! rules {
     ($($name:ident = $code:literal, $req:expr, $docs:literal;)*) => {
-        $(#[allow(missing_docs)] pub const $name: Rule = Rule { code: $code, requirement: $req, docs: $docs };)*
+        $(pub const $name: Rule = Rule { code: $code, requirement: $req, docs: $docs };)*
     };
 }
 
@@ -68,6 +80,7 @@ rules! {
     ALARM_ACTION     = "IRON-E043", Some("REQ-ALM-001"), "specs/alarm-engine.md";
     ALARM_NAME       = "IRON-E044", Some("REQ-ALM-004"), "specs/alarm-engine.md";
     COMMAND          = "IRON-E050", None, "specs/command-path.md";
+    CONNECTION       = "IRON-E060", None, "specs/protocol-drivers.md";
     NOT_IMPLEMENTED  = "IRON-E900", None, "business/roadmap.md";
     MISSING_UNIT     = "IRON-W001", None, "specs/tag-model.md";
     NOT_VALIDATED    = "IRON-W900", None, "business/roadmap.md";
@@ -83,10 +96,7 @@ pub struct Report {
 impl Report {
     #[must_use]
     pub fn errors(&self) -> usize {
-        self.diagnostics
-            .iter()
-            .filter(|d| d.severity == Severity::Error)
-            .count()
+        self.diagnostics.iter().filter(|d| d.severity == Severity::Error).count()
     }
 
     #[must_use]

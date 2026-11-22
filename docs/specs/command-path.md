@@ -107,8 +107,10 @@ them:
 - **Config must match.** The edge MUST reject a command whose `config_hash`
   differs from its own: the two sides disagree about what the command means. `REQ-CMD-006 integration`
 
-A command the edge rejects produces a result naming the reason. Nothing is
-dropped silently.
+A command the edge refuses produces a result naming the reason; nothing is
+dropped silently. The final state follows the reason: too late, or no clock
+estimate to judge lateness by, is `EXPIRED`; a duplicate id, a config
+mismatch, or an unknown command is `REJECTED`.
 
 ### Execution
 

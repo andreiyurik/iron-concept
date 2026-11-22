@@ -26,7 +26,7 @@ is not automatically testable.
 | `REQ-CFG-002` | integration | [config-lifecycle](specs/config-lifecycle.md) | **`iron deploy` MUST refuse** to deploy onto a target holding adjustments that the commit being deployed does not contain, and MUST name them. The… |
 | `REQ-CFG-003` | integration | [config-lifecycle](specs/config-lifecycle.md) | **Alarm state survives an apply.** An alarm whose definition did not change MUST keep its state (active, acknowledged, shelved). A deploy must not… |
 | `REQ-CFG-004` | integration | [config-lifecycle](specs/config-lifecycle.md) | An adjustment MUST be limited to exactly these alarm fields, and nothing else: |
-| `REQ-CFG-005` | integration | [config-lifecycle](specs/config-lifecycle.md) | Configuration files MUST be UTF-8 YAML restricted to: block mappings and sequences, single-line flow mappings and sequences for leaf values (`range… |
+| `REQ-CFG-005` | integration | [config-lifecycle](specs/config-lifecycle.md) | Configuration files MUST be UTF-8 YAML restricted to: block mappings and sequences, flow mappings and sequences that fit on one line (`range: [0, 2… |
 | `REQ-CFG-006` | integration | [config-lifecycle](specs/config-lifecycle.md) | Reading a file and writing it back with no edit MUST reproduce it byte-for-byte. |
 | `REQ-CFG-007` | integration | [config-lifecycle](specs/config-lifecycle.md) | An edit operation MUST leave every byte it did not change untouched — comments, ordering, indentation, quoting. |
 | `REQ-CFG-008` | integration | [config-lifecycle](specs/config-lifecycle.md) | An edit operation MUST validate the resulting project and MUST NOT write a result that fails validation; it returns the diagnostics instead. |
@@ -74,7 +74,7 @@ is not automatically testable.
 | `REQ-EXP-006` | unit | [expressions](specs/expressions.md) | **Arithmetic MUST NOT panic and MUST NOT yield a non-finite value.** Division by zero, `sqrt` of a negative, `ln`/`log10` of a non-positive number,… |
 | `REQ-EXP-007` | unit | [expressions](specs/expressions.md) | The quality of a derived value MUST be the **worst quality among all tags the expression references** — including both branches of an `if`. An expr… |
 | `REQ-EXP-008` | unit | [expressions](specs/expressions.md) | `suppressed_when` MUST fail toward annunciation: if any referenced tag is not `GOOD`, the condition is `false` and the alarm is **not** suppressed.… |
-| `REQ-EXT-001` | integration | [extensions](specs/extensions.md) | A plugin that publishes tags MUST follow the tag value contract (value/quality/timestamp — tag-model.md); `iron validate` checks declared plugin ta… |
+| `REQ-EXT-001` | integration | [extensions](specs/extensions.md) | A plugin that publishes tags MUST follow the tag value contract (value/quality/timestamp — tag-model.md); `iron validate` checks the tags a plugin… |
 | `REQ-EXT-002` | integration | [extensions](specs/extensions.md) | The same module binary MUST run unmodified inside `iron test --sim` — modules are testable without hardware, like everything else. |
 | `REQ-HIS-001` | integration | [historian](specs/historian.md) | Inserts MUST accept out-of-order timestamps — buffer replay after a network outage arrives late by design (edge-agent.md). |
 | `REQ-HIS-002` | integration | [historian](specs/historian.md) | **Trend rendering** MUST draw stepped/LOCF interpolation between sparse points, not linear interpolation through gaps. |
@@ -102,11 +102,11 @@ is not automatically testable.
 | `REQ-RWS-002` | integration | [read-write-separation](specs/read-write-separation.md) | Tags (READ) live in `config/tags/`. Commands (WRITE) live in `config/commands/`. A tag definition MUST NOT contain a writable target. |
 | `REQ-RWS-003` | integration | [read-write-separation](specs/read-write-separation.md) | A control widget MUST reference a command definition; binding one to a tag is a validation error (visual-system.md). |
 | `REQ-RWS-004` | integration | [read-write-separation](specs/read-write-separation.md) | The alarm engine is a READ-path consumer. An alarm MUST NOT trigger a command — see alarm-engine.md for why, and for what to do instead. |
-| `REQ-RWS-005` | integration | [read-write-separation](specs/read-write-separation.md) | Each edge's credentials allow it to **publish only** its own data, alarm, and result subjects and **subscribe only** to its own command subjects. A… |
+| `REQ-RWS-005` | integration | [read-write-separation](specs/read-write-separation.md) | Each edge's credentials allow it to **publish only** its own data, alarm, result, and session (`edge.`) subjects and **subscribe only** to its own… |
 | `REQ-RWS-006` | integration | [read-write-separation](specs/read-write-separation.md) | All broker connections MUST use TLS; edge credentials SHOULD be per-device keys (mTLS or NATS NKeys), individually revocable. |
 | `REQ-RWS-007` | integration | [read-write-separation](specs/read-write-separation.md) | The real-time WebSocket MUST be **read-only**: its protocol has message types for subscribing and for receiving data, and none for writing. A clien… |
 | `REQ-RWS-008` | integration | [read-write-separation](specs/read-write-separation.md) | The command executor validates every command against its own copy of `config/commands/` and MUST refuse anything not declared there, whatever the s… |
-| `REQ-SEC-001` | integration | [security](specs/security.md) | Rule: a host that is reachable from outside the protected zone MUST NOT hold credentials that can publish on `cmd.>`. A compromise of the `ui` role… |
+| `REQ-SEC-001` | integration | [security](specs/security.md) | Rule, for a split-roles deployment: a host that is reachable from outside the protected zone MUST NOT hold credentials that can publish on `cmd.>`.… |
 | `REQ-TAG-001` | unit | [tag-model](specs/tag-model.md) | > **Note what is absent.** Alarms carry no `action:` field. An IRON alarm > notifies humans; it MUST NOT trigger commands. Automatic protective rea… |
 | `REQ-TAG-002` | unit | [tag-model](specs/tag-model.md) | A tag MUST have exactly one of `source` and `derived`. |
 | `REQ-TAG-003` | unit | [tag-model](specs/tag-model.md) | Alarm limits MUST lie within `range`. A `high_high` of 220 with `range: [0, 200]` is a specification error: the alarm could never trigger. |

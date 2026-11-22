@@ -113,10 +113,11 @@ and in no other way
 ### The file format: a lossless subset of YAML
 
 - Configuration files MUST be UTF-8 YAML restricted to: block mappings and
-  sequences, single-line flow mappings and sequences for leaf values
+  sequences, flow mappings and sequences that fit on one line
   (`range: [0, 200]`), plain and quoted scalars, and comments. Anchors,
-  aliases, merge keys, explicit tags, multi-document files, multi-line flow
-  collections, and duplicate keys are not allowed; `iron validate` MUST
+  aliases, merge keys, explicit tags, block scalars (`|`, `>`), complex keys
+  (`? `), directives, multi-document files, multi-line flow collections,
+  and duplicate keys are not allowed; `iron validate` MUST
   reject them with a diagnostic. `REQ-CFG-005 integration`
 - Reading a file and writing it back with no edit MUST reproduce it
   byte-for-byte. `REQ-CFG-006 integration`
@@ -142,7 +143,8 @@ A closed set, implemented once in `iron-core`:
   `iron generate`, `iron upgrade`, and any future form, binding tool, or
   agent tool — MUST do so through these operations. `REQ-CFG-010 integration`
 
-In v1 the operations have three callers, all in the CLI. Forms in the web
+The operations' callers are CLI commands (`iron generate`, `iron diff
+--pull`, `iron upgrade`) and the MCP `generate` tool, which is the same code. Forms in the web
 UI and click-to-bind for mimics are *deferred*
 ([business/deferred.md](../business/deferred.md)); when they arrive they run
 inside `iron dev` on a workstation and call the same operations.

@@ -69,7 +69,10 @@ req = subprocess.run(
     capture_output=True, text=True,
 )
 if req.returncode != 0:
+    # Its first stdout line is a count; a crash leaves only a traceback on stderr.
     errors.extend(l.strip() for l in req.stdout.splitlines()[1:])
+    if req.stderr.strip():
+        errors.append("scripts/requirements.py crashed: " + req.stderr.strip().splitlines()[-1])
 
 if errors:
     print(f"❌ {len(errors)} problem(s):")

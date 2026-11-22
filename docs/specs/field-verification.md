@@ -48,7 +48,7 @@ together they are complete.
 The protocol for each tag is **derived from its spec** — signal type, range,
 and scaling come from `config/tags/`, so the checklist writes itself.
 
-**AI — analog input** (4-20mA):
+**AI — analog input** (a tag that declares `signal: 4-20mA` and its `scaling`):
 
 ```
 TAG: reactor_01.temperature   Range: 4mA = 0°C, 20mA = 200°C

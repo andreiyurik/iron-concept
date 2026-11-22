@@ -10,28 +10,28 @@ edge:
   cases:
     - name: valid command
       command: { id: c-0008, command: site.vent_setpoint, value: 40, issued_at: 998, ttl: 10, config_hash: aaa }
-      expect: accepted
+      expect: { state: DELIVERED }
     - name: expired
       requirement: REQ-CMD-001
       command: { id: c-0009, command: site.vent_setpoint, value: 40, issued_at: 989, ttl: 10, config_hash: aaa }
-      expect: { rejected: expired }
+      expect: { state: EXPIRED, reason: ttl }
     - name: no clock estimate
       requirement: REQ-CMD-001
       state: { offset_known: false }
       command: { id: c-0010, command: site.vent_setpoint, value: 40, issued_at: 998, ttl: 10, config_hash: aaa }
-      expect: { rejected: no_clock_estimate }
+      expect: { state: EXPIRED, reason: no_clock_estimate }
     - name: duplicate id
       requirement: REQ-CMD-005
       command: { id: c-0007, command: site.vent_setpoint, value: 40, issued_at: 998, ttl: 10, config_hash: aaa }
-      expect: { rejected: duplicate }
+      expect: { state: REJECTED, reason: duplicate }
     - name: config hash differs
       requirement: REQ-CMD-006
       command: { id: c-0011, command: site.vent_setpoint, value: 40, issued_at: 998, ttl: 10, config_hash: bbb }
-      expect: { rejected: config_mismatch }
+      expect: { state: REJECTED, reason: config_mismatch }
     - name: command not declared on the edge
       requirement: REQ-RWS-008
       command: { id: c-0012, command: site.heater_on, value: true, issued_at: 998, ttl: 10, config_hash: aaa }
-      expect: { rejected: unknown_command }
+      expect: { state: REJECTED, reason: unknown_command }
 
 # Final lifecycle state for a whole command.
 lifecycle:
@@ -44,5 +44,6 @@ lifecycle:
     events: [issue, { write: 40 }, { read_back: 0 }]
     expect: { state: FAILED }
   - name: feedback tag never reaches the expected state
+    requirement: REQ-CMD-007
     events: [issue, { write: 40 }, { read_back: 40 }, { wait_feedback_timeout: true }]
     expect: { state: FAILED }

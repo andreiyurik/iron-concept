@@ -18,16 +18,13 @@ pub struct PublishFilter {
 }
 
 impl PublishFilter {
-    // REQ-EDG-001..004. The first sample always publishes.
+    // REQ-EDG-001..004
     #[must_use]
     pub fn should_publish(&self, t_ms: i64, value: f64, quality: Quality) -> bool {
         let Some(last) = self.last else { return true };
         let value_moved = (value - last.value).abs() >= self.deadband;
         let quality_moved = quality != last.quality;
-        let limit_crossed = self
-            .alarm_limits
-            .iter()
-            .any(|&l| crossed(last.value, value, l));
+        let limit_crossed = self.alarm_limits.iter().any(|&l| crossed(last.value, value, l));
         let heartbeat_due = t_ms - last.t_ms >= self.max_interval_ms;
         value_moved || quality_moved || limit_crossed || heartbeat_due
     }
@@ -35,16 +32,13 @@ impl PublishFilter {
     pub fn offer(&mut self, t_ms: i64, value: f64, quality: Quality) -> bool {
         let publish = self.should_publish(t_ms, value, quality);
         if publish {
-            self.last = Some(Published {
-                t_ms,
-                value,
-                quality,
-            });
+            self.last = Some(Published { t_ms, value, quality });
         }
         publish
     }
 }
 
+// Landing exactly on a limit counts as crossing it.
 fn crossed(a: f64, b: f64, limit: f64) -> bool {
     (a < limit) != (b < limit) || (a <= limit) != (b <= limit)
 }

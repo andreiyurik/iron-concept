@@ -1,6 +1,6 @@
 //! The scenario runner: derived tags, delays, and honest failures.
 
-use iron_core::{model, sim, validate, Files};
+use iron_core::{check, sim, Files};
 
 const TAGS: &str = "\
 r:
@@ -23,14 +23,9 @@ r:
 ";
 
 fn run(scenario: &str) -> sim::Outcome {
-    let mut files = Files::new();
-    files.insert("config/tags/r.yaml".into(), TAGS.into());
-    assert!(
-        validate(&files).is_valid(),
-        "{:#?}",
-        validate(&files).diagnostics
-    );
-    sim::run("test/sim/scenarios/s.yaml", scenario, &model::build(&files))
+    let checked = check(&Files::from([("config/tags/r.yaml".to_string(), TAGS.to_string())]));
+    assert!(checked.report.is_valid(), "{:#?}", checked.report.diagnostics);
+    sim::run("test/sim/scenarios/s.yaml", scenario, &checked.project)
 }
 
 #[test]
@@ -83,4 +78,36 @@ assertions:
     ] {
         assert!(all.contains(needle), "missing {needle:?} in:\n{all}");
     }
+}
+
+// A scenario that checks nothing must not pass.
+#[test]
+fn malformed_scenarios_fail() {
+    for (scenario, needle) in [
+        ("", "empty"),
+        ("name: nothing\n", "no assertions"),
+        (
+            "timeline:\n  - { t: 0s, set: { r.temp: 1 } }\nassertion:\n  - { at: 1s, expect: { r.temp.high: normal } }\n",
+            "unknown key 'assertion'",
+        ),
+        ("timeline: { t: 0s }\nassertions: 5\n", "must be a list"),
+        ("timeline:\n  - { t: 0, set: { r.temp: 1 } }\nassertions:\n  - { at: 1s, expect: { r.temp.high: normal } }\n", "not a duration"),
+    ] {
+        let o = run(scenario);
+        assert!(!o.passed && o.failures.join("\n").contains(needle), "{scenario:?}: {:?}", o.failures);
+    }
+}
+
+// REQ-ALM-007: no assertion falls between the samples, so nothing polls.
+#[test]
+fn an_elapsed_delay_is_honoured_without_a_poll() {
+    let o = run("\
+timeline:
+  - { t: 0s, set: { r.temp: 185 } }
+  - { t: 10s, set: { r.temp: 170 } }
+  - { t: 20s, set: { r.temp: 185 } }
+assertions:
+  - { at: 25s, expect: { r.temp.high: active } }
+");
+    assert!(o.passed, "{:#?}", o.failures);
 }

@@ -30,9 +30,9 @@ build in public until it assembles itself. The sequence every successful
 project followed: publish → someone comments → opens an issue → first PR →
 contributor → maintainer → co-founder.
 
-## Phase 0 — Foundation (now)
+## Phase 0 — Foundation (overlapping with Phase 1 — the first code exists)
 
-**Goal:** make IRON findable by the right people before writing code. People
+**Goal:** make IRON findable by the right people while the code is still small. People
 who engage with specs before code exists are the highest-quality future
 contributors.
 
@@ -116,8 +116,9 @@ The vertical slice, deliberately narrow:
   the weak spot while it is still cheap), and the write-up doubles as the
   Phase 1 deep-dive that recruits Rust contributors
 
-Explicitly deferred: OPC-UA, S7, mimics, editor, RBAC depth, WASM modules,
-PLC runtime — each with its trigger in [deferred.md](deferred.md). Protocol
+Not in this phase: OPC-UA, mimics, and RBAC depth (Phase 2), S7 (Phase 3);
+and the editor, WASM modules, and the PLC runtime, which are deferred with
+triggers in [deferred.md](deferred.md). Protocol
 edge cases are the top schedule risk; one protocol done well beats four
 half-done.
 
@@ -137,6 +138,7 @@ becomes the reference case that shortens every later sale.
 
 - OPC-UA client (S7-1200/1500, Beckhoff)
 - Historian trends (rollups), alarm ack + escalation, basic RBAC
+- SVG mimics ([visual-system.md](../specs/visual-system.md), Layer 2)
 - Runtime adjustments of alarm tuning, `iron diff --pull`
   ([config-lifecycle.md](../specs/config-lifecycle.md)) — the first night
   on a real plant is when this is needed
