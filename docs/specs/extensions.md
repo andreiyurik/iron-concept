@@ -1,7 +1,7 @@
 ---
 status: draft
 type: spec
-depends-on: [read-write-separation, edge-agent, tag-model]
+depends-on: [read-write-separation, edge-agent, tag-model, expressions, transport]
 ---
 
 # Extension Model
@@ -29,9 +29,16 @@ v1 ─ Out-of-process (plugins):       v1 ─ External (REST / WebSocket API):
 
 ## Plugins (v1)
 
+**First, check whether you need one.** A value computed from other tags by
+arithmetic — a difference, a ratio, a unit conversion, a dew point — is a
+derived tag: one `derived:` line in a tag file, no program
+([tag-model.md](tag-model.md), [expressions.md](expressions.md)). A plugin
+is for what an expression cannot be: anything with state, history, a
+library, or its own I/O.
+
 An IRON plugin is a **separate program** — it never runs inside the core.
 For anything that is a program — a custom protocol driver, an ML model, a
-bridge to a legacy system, a derived-tag calculator — write a normal program
+bridge to a legacy system, a stateful calculation — write a normal program
 in any language and connect it to NATS with its own credentials:
 
 ```
@@ -52,9 +59,9 @@ plugin "vibration-ml" (Python):
 - A plugin that publishes tags MUST follow the tag value contract
   (value/quality/timestamp — [tag-model.md](tag-model.md)); `iron validate`
   checks declared plugin tags like any others, and they are first-class:
-  quality, historian, alarms. Derived tags are also how display logic stays
-  out of the UI — a widget renders values, it never computes them
-  ([visual-system.md](visual-system.md)).
+  quality, historian, alarms. Alarms on plugin-published tags are detected by
+  the server, like those of any tag no single edge owns
+  ([alarm-engine.md](alarm-engine.md)). `REQ-EXT-001 integration`
 - Custom *protocol drivers* are plugins by default (any language, crash in
   isolation); drivers graduate into iron-edge (Rust) when they prove general
   demand.
@@ -158,7 +165,7 @@ Normative rules:
 - Module updates deploy without recompiling or restarting the host
   (`iron module add ./dew_point.wasm`, hot-swapped between scan cycles).
 - The same module binary MUST run unmodified inside `iron test --sim` —
-  modules are testable without hardware, like everything else.
+  modules are testable without hardware, like everything else. `REQ-EXT-002 integration`
 
 ## What is deliberately NOT extensible
 

@@ -5,30 +5,37 @@ document contradicts the glossary, the document is wrong — fix one of them.
 
 | Term | Definition |
 |---|---|
-| **Tag** | A named mapping of one physical signal to one value in the system; the unit of configuration, history, and display. Spec: [specs/tag-model.md](specs/tag-model.md) |
+| **Tag** | A named value with quality and time — read from a physical signal or derived from other tags; the unit of configuration, history, and display. Spec: [specs/tag-model.md](specs/tag-model.md) |
+| **Tag address / area** | A tag's canonical dotted path (`zone_1.air_temperature`), identical everywhere it is named; its first segment is the tag's area, and every area is owned by exactly one edge. Spec: [specs/transport.md](specs/transport.md) |
+| **Derived tag** | A tag computed from other tags by an expression (`derived:`); first-class — quality, history, alarms. Spec: [specs/tag-model.md](specs/tag-model.md) |
+| **Expression** | A formula in IRON's one expression language: pure, total, statically typed; used for derived tags, alarm suppression, and device-type parameters. Spec: [specs/expressions.md](specs/expressions.md) |
 | **Quality** | Per-sample trust marker: `GOOD` / `UNCERTAIN` / `BAD`. Part of the value, not metadata |
 | **Deadband** | Minimum change required to publish a new sample; suppresses noise traffic. Never delays quality changes or alarm-limit crossings |
 | **Scan rate** | Polling interval for a tag (e.g. `1s`) |
 | **Edge agent** | iron-edge: the Rust process next to the PLC — polls, converts, filters, buffers, evaluates first-level alarms, executes authorized commands |
 | **Store-and-forward** | Edge buffering (SQLite) during network loss with ordered replay after reconnect; no data loss across outages |
 | **Heartbeat** | Forced periodic publish (default 60s) so "stable value" is distinguishable from "dead link" |
-| **READ path** | Sensors → edge → broker → storage → UI. Strictly one-directional. Spec: [specs/read-write-separation.md](specs/read-write-separation.md) |
+| **READ path** | Sensors → edge → transport → storage → UI. Strictly one-directional. Spec: [specs/read-write-separation.md](specs/read-write-separation.md) |
 | **WRITE path / command** | Operator → auth → RBAC → audit → Command Service → edge → machine. The only way IRON changes the physical world. Spec: [specs/command-path.md](specs/command-path.md) |
-| **Command Service** | The single component allowed to publish on command subjects; the WRITE path's one entry point |
+| **Command Service** | The single component that can cause a write, and only to targets declared in `config/commands/`; the WRITE path's one entry point |
+| **Transport** | The contract between the edge and server roles — message kinds, delivery guarantees, session — with two bindings: in-process channels and NATS JetStream. Spec: [specs/transport.md](specs/transport.md) |
+| **Committed / effective config** | Committed: the spec files at a Git commit. Effective: committed config plus adjustments — what actually runs. Spec: [specs/config-lifecycle.md](specs/config-lifecycle.md) |
+| **Adjustment** | An audited change to an alarm's limit, hysteresis, or delays made on a running site; reported by `iron diff`, returned to Git with `iron diff --pull`. Nothing else is adjustable |
+| **Config hash** | Hash of the effective configuration; two targets with the same hash run the same configuration. Carried in the session handshake and in every command |
 | **Alarm** | A defined abnormal condition that notifies humans. Detected at the edge, managed at the server, **never** triggers commands. Spec: [specs/alarm-engine.md](specs/alarm-engine.md) |
 | **Ack / RTN / shelving** | Alarm lifecycle terms (ISA-18.2): operator acknowledgment; return-to-normal; temporary audited muting of a nuisance alarm |
 | **Alarm flood** | Annunciation rate exceeding what an operator can process; the alarm engine detects and manages it |
 | **Interlock** | Automatic protective logic in the PLC (or safety PLC) — observed by IRON, never implemented by it |
 | **Safety PLC / SIL** | Certified controller / Safety Integrity Level for functions whose failure harms people. Out of IRON's scope, by design |
-| **Historian** | The time-series store (TimescaleDB) for samples, alarms, and audit. Spec: [specs/historian.md](specs/historian.md) |
+| **Historian** | The time-series store for samples, alarms, and audit — SQLite in the default deployment, TimescaleDB in plant mode, one storage contract. Spec: [specs/historian.md](specs/historian.md) |
 | **LOCF** | Last observation carried forward — how sparse (deadband-filtered) history is read: no row means "unchanged", not "unknown" |
-| **Continuous aggregate** | Pre-computed time-weighted rollup (1m/5m/1h/1d) serving long trend queries |
+| **Rollup / continuous aggregate** | Pre-computed time-weighted rollup (1m/5m/1h/1d) serving long trend queries; a continuous aggregate in TimescaleDB, a maintained table in SQLite |
 | **Device type** | Reusable template of tags + alarms + commands + widgets, instantiated per equipment unit (cf. Ignition UDT). Spec: [specs/device-types.md](specs/device-types.md) |
 | **IO list** | The instrument/signal spreadsheet from the electrical designer; importable via `iron generate from-io-list` |
 | **Mimic (mnemonic diagram)** | The P&ID-style operator screen; in IRON, an SVG with `data-iron-*` bindings. Spec: [specs/visual-system.md](specs/visual-system.md) |
 | **Widget** | A pre-built dashboard component (gauge, trend, alarm panel…) bound to tags or commands |
-| **UNS (Unified Namespace)** | The pattern where every data point has one canonical hierarchical address; IRON implements it as NATS subjects |
-| **Subject** | A NATS topic, e.g. `data.plant.line1.reactor1.temperature`; authorization is per-subject |
+| **UNS (Unified Namespace)** | The pattern where every data point has one canonical hierarchical address; in IRON that address is the tag path, mapped onto NATS subjects in plant mode |
+| **Subject** | A NATS topic, e.g. `data.plant.line_1.reactor_01.temperature` (root · site · tag path); authorization is per-subject. Roots: `data`, `alarm`, `cmd`, `result`, `edge` |
 | **OT / IT** | Operational technology (plant floor: PLCs, sensors, VLAN 10) / information technology (servers, VLAN 20) |
 | **PLC** | Programmable logic controller — the device executing control logic in a deterministic scan cycle |
 | **Scan cycle** | The PLC's read-inputs → execute-logic → write-outputs loop, typically 1–10ms |
@@ -36,16 +43,19 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **Structured Text (ST)** | The textual IEC 61131-3 language; Git-friendly, the focus of [specs/plc-runtime.md](specs/plc-runtime.md) |
 | **Online change** | Modifying a running PLC program without stopping the process — the hardest unsolved problem for open runtimes |
 | **Commissioning** | On-site verification that every physical signal matches configuration; IRON's [`iron field`](specs/field-verification.md) workflow |
-| **Drift** | Divergence between the configuration in Git and what actually runs; detected by `iron diff` |
-| **WASM module** | Sandboxed, language-agnostic in-process extension (derived tags, conversions, notification channels) with manifest-declared capabilities; can never publish commands. Spec: [specs/extensions.md](specs/extensions.md) |
+| **Drift** | Divergence between the configuration in Git and what actually runs; detected by `iron diff`, which separates attributed adjustments from unexplained drift |
+| **WASM module** | *Deferred.* Sandboxed, language-agnostic in-process extension (stateful calculations, conversions, notification channels) with manifest-declared capabilities; can never publish commands. Spec: [specs/extensions.md](specs/extensions.md) |
 | **Plugin** | A separate program in any language — custom driver, analytics, ML, bridge — connected to IRON with its own scoped credentials; crashes in isolation; can never hold command rights. Declared in `config/plugins/`, scaffolded by `iron new plugin`. Spec: [specs/extensions.md](specs/extensions.md) |
 | **Default deployment (one binary)** | IRON as installed: one `iron` binary, in-process transport, SQLite, no external services; identical configuration format to plant mode, which adds NATS + TimescaleDB when a site outgrows one box. Spec: [specs/deployment.md](specs/deployment.md) |
+| **Requirement identifier** | The permanent name of one MUST (`REQ-CMD-003`), carried inline in its spec with the test level that proves it; listed in the generated [requirements index](requirements.md) |
+| **Conformance vectors** | Language-neutral cases in `conformance/` — inputs and the exact required outputs — that the implementation is written against |
 | **Deferred** | Designed but not in v1; each idea has a trigger that brings it back — [business/deferred.md](business/deferred.md) |
-| **4–20mA** | The dominant analog signal standard: 4mA = range min, 20mA = max; below 4mA indicates a broken wire |
-| **Modbus / OPC-UA / S7 / MQTT / IO-Link** | Field protocols the edge agent speaks; see [specs/tag-model.md](specs/tag-model.md) for source URI schemes |
+| **4–20mA** | The dominant analog signal standard: 4mA = range min, 20mA = max; below 4mA indicates a broken wire. In IRON the conversion is always an explicit `scaling`, never implied |
+| **Modbus / OPC-UA / S7 / MQTT / IO-Link** | Field protocols the edge agent speaks or intends to; source URI schemes in [specs/tag-model.md](specs/tag-model.md), addressing and polling in [specs/protocol-drivers.md](specs/protocol-drivers.md) |
+| **Byte order (ABCD / CDAB / …)** | How a 32- or 64-bit value's bytes are laid out across Modbus registers; device-specific, set per connection or per tag |
 | **OEE** | Overall Equipment Effectiveness = Availability × Performance × Quality; the plant productivity metric. Honest treatment: [business/economics.md](business/economics.md) |
 | **iron-edge / iron-server** | The two runtime roles, both Rust, shipped in one `iron` binary: edge runtime / server (UI, historian, alarms, commands, agent interface) |
 | **iron-core** | The operations library every interface wraps: manifest derivation, validator, explain, generate. CLI, MCP, and a future LSP are thin facades over it — [specs/agent-interface.md](specs/agent-interface.md) |
-| **iron-domain** | The pure, I/O-free crate shared by edge, server, WASM modules, and simulator: tag model, quality, deadband, alarm state machine, command validation |
+| **iron-domain** | The pure, I/O-free crate shared by edge, server, validator, and simulator: tag model, quality, deadband, expression evaluator, alarm state machine, command validation |
 | **Plant manifest** | The machine-readable graph derived from the specs that `validate`, `explain`, `diff`, and MCP read; never hand-written — [specs/agent-interface.md](specs/agent-interface.md) |
 | **Context pack** | A compact, per-area extract of the manifest for an agent or reviewer — [specs/agent-interface.md](specs/agent-interface.md) |

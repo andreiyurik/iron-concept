@@ -18,6 +18,8 @@ support are in [../specs/](../specs/).
 | [0009](0009-rust-for-the-server.md) | Rust for the server — one runtime language | Accepted |
 | [0010](0010-svelte-for-the-ui.md) | Svelte 5 + TypeScript for the browser UI | Accepted |
 | [0011](0011-ai-native-surface.md) | AI-native surface: one core, two interfaces (CLI + MCP) | Accepted |
+| [0012](0012-one-expression-language.md) | One small expression language, not a scripting language | Accepted |
+| [0013](0013-bounded-runtime-adjustments.md) | Git is the source of truth, with bounded runtime adjustments | Accepted |
 
 ## Proposing a decision
 

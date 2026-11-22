@@ -1,14 +1,39 @@
 ---
 status: draft
 type: spec
-depends-on: [tag-model, edge-agent]
+depends-on: [tag-model, edge-agent, transport]
 ---
 
 # Historian
 
-One database for everything: configuration, time-series, alarm history, users,
-permissions, audit. TimescaleDB — PostgreSQL with a time-series extension.
-Rationale for the choice: [decisions/0004-timescaledb.md](../decisions/0004-timescaledb.md).
+One database for everything: time-series, alarm history, users, permissions,
+audit. Two engines implement it: **SQLite** in the default single-binary
+deployment and **TimescaleDB** — PostgreSQL with a time-series extension —
+in plant mode ([deployment.md](deployment.md)). Rationale for TimescaleDB:
+[decisions/0004-timescaledb.md](../decisions/0004-timescaledb.md).
+
+## The storage contract
+
+Everything in this document except the sections marked *TimescaleDB* is a
+requirement on **both** engines. Application code is written against the
+contract; `iron-server` has one storage interface with two implementations,
+and the same test suite runs against each.
+
+| Requirement | SQLite | TimescaleDB |
+|---|---|---|
+| Idempotent insert on `(tag, ts)`, out-of-order accepted | ✅ | ✅ |
+| LOCF reads, documented gaps, time-weighted aggregates | ✅ computed by IRON | ✅ |
+| Rollups for long trends | Rollup tables maintained by `iron-server` | Continuous aggregates |
+| Retention | Deletion by age, run by `iron-server` | Retention policies |
+| Compression | — | Native |
+
+The cost is stated plainly: rollups, retention, and time-weighted math exist
+twice, once in IRON's code for SQLite and once as TimescaleDB features. The
+shared test suite is what keeps the two from disagreeing, and the ceiling of
+the SQLite engine is a **target until measured**
+([architecture.md](architecture.md)).
+
+The diagram below describes plant mode.
 
 ```
 Traditional approach:              IRON:
@@ -32,10 +57,15 @@ CREATE TABLE samples (
 SELECT create_hypertable('samples', 'ts');
 ```
 
-- `(tag_id, ts)` is the identity: replayed/duplicate deliveries from JetStream
-  upsert idempotently.
+- `(tag_id, ts)` is the identity: replayed or duplicate deliveries upsert
+  idempotently ([transport.md](transport.md)).
+- Every tag type is stored as a double: `bool` as 0/1, and all integer types
+  exactly, since none exceeds 32 bits. The tag's declared `type` is restored
+  on read.
+- Derived tags are stored like any other tag; the historian does not
+  recompute them.
 - Inserts MUST accept out-of-order timestamps — buffer replay after a network
-  outage arrives late by design ([edge-agent.md](edge-agent.md)).
+  outage arrives late by design ([edge-agent.md](edge-agent.md)). `REQ-HIS-001 integration`
 - Alarm events and command audit records are separate hypertables with the
   same conventions.
 
@@ -48,20 +78,21 @@ This has consequences every consumer must respect:
   most recent sample at or before T. "No row at 14:23" does not mean "no data"
   — it means "unchanged since the previous row".
 - **Trend rendering** MUST draw stepped/LOCF interpolation between sparse
-  points, not linear interpolation through gaps.
+  points, not linear interpolation through gaps. `REQ-HIS-002 integration`
 - **A real gap** (edge offline and buffer overflowed, or quality BAD) is
   distinguishable: gap markers from the edge agent and quality transitions are
   stored as rows. Trends MUST render documented gaps visibly, not paper over
-  them.
+  them. `REQ-HIS-003 integration`
 - **Aggregates** (avg/min/max) over sparse data MUST be time-weighted, not
   row-weighted: a value that held for 50 minutes counts 50× more than one that
-  held for one minute.
+  held for one minute. `REQ-HIS-004 integration`
 
 The heartbeat publish (max interval, default 60s) bounds how stale LOCF can be.
 
-## Continuous aggregates
+## Rollups
 
-Pre-computed rollups make long trends cheap:
+Pre-computed rollups make long trends cheap — continuous aggregates in
+TimescaleDB, rollup tables in SQLite:
 
 | Zoom level | Source | Typical points |
 |---|---|---|
@@ -76,6 +107,9 @@ quality-degraded flag so rollups never hide that the underlying hour contained
 BAD data.
 
 ## Compression and retention
+
+Compression is a TimescaleDB feature; the SQLite engine applies retention
+only.
 
 > **Design targets, not measurements.** TimescaleDB documents 8–12×
 > compression on typical time-series workloads and millisecond-range queries

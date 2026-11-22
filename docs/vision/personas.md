@@ -48,7 +48,9 @@ day. Budget: $2,000 total.
 
 **IRON for Bakyt:** A Raspberry Pi with the edge agent, a dashboard on his
 phone, a Telegram alert when the temperature drops at night. 40 sensors cost
-the same as 4 — nothing. He doesn't know what Rust is and never needs to.
+the same as 4 — nothing. He doesn't know what Rust is and never needs to. What
+IRON will not do for him is run the greenhouse: the vents and irrigation are
+driven by the controller nodes in each zone, and IRON watches them.
 Entry level: 1 (mouse only), with a neighbor's son or a local integrator doing
 the one-day setup. Hardware path: [guides/hardware.md](../guides/hardware.md),
 Level 1.

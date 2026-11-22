@@ -34,6 +34,22 @@ zone_1:
         priority: 3
         message: "Zone 1 humidity high — condensation and fungus risk"
 
+  # Vapour-pressure deficit — what the crop actually feels. Computed, not
+  # measured: a derived tag (docs/specs/expressions.md). Both inputs belong
+  # to this site's one edge, so it is evaluated there and its alarm works
+  # without a server.
+  vpd:
+    derived: "0.6108 * exp(17.27 * zone_1.air_temperature / (zone_1.air_temperature + 237.3)) * (1 - zone_1.humidity / 100)"
+    type: float32
+    unit: "kPa"
+    deadband: 0.05
+    range: [0, 8]
+    alarms:
+      high:
+        limit: 1.6
+        priority: 3
+        message: "Zone 1 VPD high — plants closing stomata, check humidity"
+
   soil_moisture_bed_a:
     source: modbus://gh-node-1/holding/0x0004
     type: float32

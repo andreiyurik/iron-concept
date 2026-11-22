@@ -46,7 +46,7 @@ panel, grouped by the plant hierarchy. Convention over configuration, applied
 to the screen itself:
 
 - The auto-dashboard MUST require zero configuration and MUST render every
-  tag of the area — nothing silently hidden.
+  tag of the area — nothing silently hidden. `REQ-VIS-001 unit`
 - A dashboard YAML file *customizes*; it is never *required*. Creating
   `config/dashboards/reactor_01.yaml` replaces the auto-dashboard for that
   area; `iron generate dashboard reactor_01` writes the auto-layout out as a
@@ -101,11 +101,16 @@ Layout:          group · mimic_embed · nav_link
 Normative:
 
 - Display widgets MUST render quality: a `BAD` value is visually distinct,
-  never displayed as a plausible number.
+  never displayed as a plausible number. `REQ-VIS-002 unit`
 - Control widgets MUST reference a command definition; binding a control
-  widget to a tag is a validation error.
+  widget to a tag is a validation error. `REQ-VIS-003 unit`
 - Each widget subscribes over the typed WebSocket to exactly its own tags —
   an open screen receives updates for visible tags only.
+- The WebSocket is read-only. A control widget does not send anything on it:
+  it submits a command request to the Command Service endpoint, and renders
+  the command's lifecycle as it comes back
+  ([read-write-separation.md](read-write-separation.md),
+  [command-path.md](command-path.md)).
 - A widget is a Svelte 5 component against one contract: it declares the
   tags (display) or command (control) it binds, and receives
   `{value, quality, timestamp}` as reactive state. Custom widgets implement
@@ -117,11 +122,12 @@ Normative:
   cover the "my own picture" need without any code.
 - A widget MUST NOT compute plant-meaningful values. If a number deserves
   display, it deserves to be a tag — with quality, history, and alarms — and
-  derived tags are the mechanism ([extensions.md](extensions.md)). Widgets
+  derived tags are the mechanism: one `derived:` expression in a tag file
+  ([tag-model.md](tag-model.md)). Widgets
   own pixels and session state (selection, sort order, trend zoom), nothing
   else. This is fat-model/skinny-view for the plant floor: a value computed
   inside a screen exists only on that screen, and two screens will one day
-  compute it differently.
+  compute it differently. `REQ-VIS-004 unit`
 
 Trend charts are the one non-Svelte runtime dependency (uPlot, 45KB, zero
 deps), fed by the historian's continuous aggregates with LOCF semantics

@@ -34,12 +34,13 @@ Greenhouse with 10–40 sensors, irrigation, proof of concept, learning.
 
 ```
 Raspberry Pi 4/5 (industrial enclosure, USB SSD — not SD card!)
-  ├── iron-edge: reads ESP32 nodes via Modbus RTU, or sensors directly
-  ├── iron-server: dashboard on your phone
-  └── TimescaleDB
+  └── one `iron` binary: edge role + server role + dashboard on your phone
+      SQLite inside — no database to install, no broker, no Docker
 
 ESP32 PLC nodes per zone (Industrial Shields, Arduino Opta — $80–150, DIN-rail)
-  └── Modbus RTU over RS-485, cable runs up to 1,200m
+  ├── Modbus over RS-485 (cable runs up to 1,200m) or Ethernet/Wi-Fi
+  └── **the control loops live here** — vent on temperature, irrigation on
+      a timer — and keep running if the Pi is off
 
 Fully open control option: OpenPLC on a second Pi (IEC 61131-3, Modbus TCP)
   └── open source from relay to dashboard — control logic in OpenPLC,
@@ -50,6 +51,16 @@ A 5-greenhouse farm: one Pi + five ESP32 nodes ≈ $700–1,000 (a comparable
 Siemens setup starts around $5,000). Direct sensor connection without Modbus
 works too — `i2c://`, `gpio://`, `1wire://`, `spi://` sources via
 `linux-embedded-hal` (see [tag model](../specs/tag-model.md)).
+
+**IRON does not control the greenhouse.** It monitors, records, alarms, and
+lets a person change a setpoint; it never decides to open a vent
+([command-path](../specs/command-path.md)). Something next to the process
+must: firmware on the ESP32 node, or OpenPLC. A site whose only "controller"
+would be IRON reading sensors directly over `i2c://` or `gpio://` gets a
+dashboard and alarms, not automation — and for a site that wants rules
+without a controller, Home Assistant or Node-RED is the honest
+recommendation today. Supervisory automation in IRON is deferred with its
+trigger in [deferred](../business/deferred.md).
 
 **Limitation:** this level is not production-grade — step up to Level 2 when
 the greenhouse becomes a business.
@@ -97,8 +108,10 @@ If the SCADA server fails → CODESYS keeps the plant running.
 
 **SCADA server:** Beelink EQ12 (~$150) — Intel N100, 16GB, 2× 2.5GbE,
 **passive cooling** (fan bearings are a leading cause of edge downtime), 10W.
-Recommended: two units + Patroni for PostgreSQL failover under 10 seconds —
-real HA for ~$300. For certified/extended-temp needs: Advantech UNO series;
+Recommended: two units, the second as a standby with a replicated or
+restored database, switched over by a person — about $300 for both.
+Automatic failover needs a third voter and is not designed yet
+([deployment](../specs/deployment.md)). For certified/extended-temp needs: Advantech UNO series;
 for big historians: any server with ECC RAM and IPMI.
 
 ## Level 4 — Large plant: the Trojan horse ($3,000–10,000)

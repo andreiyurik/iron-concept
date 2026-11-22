@@ -1,7 +1,7 @@
 ---
 status: draft
 type: spec
-depends-on: [tag-model, edge-agent, command-path]
+depends-on: [tag-model, edge-agent, command-path, expressions, config-lifecycle]
 ---
 
 # Alarm Engine
@@ -14,7 +14,7 @@ badly designed alarm systems have contributed to real industrial accidents.
 ## The prime rule: alarms notify, they never act
 
 An IRON alarm MUST NOT trigger a command. No `action:` field exists in alarm
-configuration, deliberately.
+configuration, deliberately. `REQ-ALM-001 unit`
 
 Why this is non-negotiable:
 
@@ -44,6 +44,11 @@ If you find yourself wanting `alarm → command`, the correct designs are:
 Detection lives at the edge because the edge is the component guaranteed to be
 alive next to the process. Management lives at the server because it needs
 humans, history, and routing.
+
+One exception, stated rather than hidden: an alarm on a derived tag whose
+inputs span several edges is detected by the server, because no single edge
+sees all the inputs ([tag-model.md](tag-model.md)). Such an alarm does not
+survive loss of the server, and `iron validate` warns when it is priority 1.
 
 ## Alarm state machine (ISA-18.2)
 
@@ -89,6 +94,8 @@ alarms:
 | `message` | yes | What the operator sees |
 | `deadband` | no | Hysteresis for clearing — prevents chatter at the limit |
 | `on_delay` / `off_delay` | no | Time qualification before transition |
+| `suppressed_when` | no | Boolean expression; see flood control below |
+| `adjustable` | no (default `true`) | Whether `limit`, `deadband`, and the delays may be tuned on a running site ([config-lifecycle.md](config-lifecycle.md)) |
 | `cause` / `consequence` / `operator_action` | no | Rationalization; displayed in the alarm detail view |
 
 `iron validate` enforces: limits within range, ordering
@@ -106,11 +113,17 @@ The most common failure of real alarm systems is not a missed alarm — it is
 
 - **Shelving.** An operator may shelve a nuisance alarm for a bounded time
   (e.g. 8h max). Shelving is audited, visible in a "shelved" list, and expires
-  automatically. Shelving MUST NOT be available for priority-1 alarms.
+  automatically. Shelving MUST NOT be available for priority-1 alarms. `REQ-ALM-002 unit`
 - **Suppression by design.** An alarm can declare a suppressing condition:
-  `suppressed_when: pump_01.running == false` — a "low flow" alarm is
-  meaningless when the pump is intentionally off. Suppressed alarms are
-  evaluated but not annunciated; they appear in a "suppressed" list.
+  `suppressed_when: "pump_01.running == false"` — a "low flow" alarm is
+  meaningless when the pump is intentionally off. The condition is a boolean
+  [expression](expressions.md) over tags, evaluated by the server.
+  Suppressed alarms are still detected but not annunciated; they appear in a
+  "suppressed" list. Suppression fails toward annunciation: if any tag the
+  condition reads is not `GOOD`, the alarm is **not** suppressed. Detection
+  at the edge is unaffected, so the edge's local notification channel
+  ignores suppression — during a server outage, more alarms is the safe
+  direction.
 - **Flood detection.** If annunciation rate for an area exceeds a threshold
   (default: 10 alarms / 10 min / operator station, per ISA-18.2 guidance), the
   UI collapses to a priority-sorted summary view and the event is itself logged
@@ -133,7 +146,7 @@ policies:
 
 Notification channels are pluggable (Telegram first, then email/SMS/webhook).
 Channel failures are logged and retried; a notification failure MUST be visible
-in the UI ("escalation delivery failed"), never silent.
+in the UI ("escalation delivery failed"), never silent. `REQ-ALM-003 unit`
 
 ## Metrics
 

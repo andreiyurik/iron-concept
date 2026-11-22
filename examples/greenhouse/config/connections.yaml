@@ -1,0 +1,13 @@
+# The two controller nodes. Optional file: without it, sources would name
+# the hosts directly and use the defaults. Format: docs/specs/protocol-drivers.md.
+gh-node-1:
+  host: 192.168.50.11
+  unit: 1
+  order: CDAB        # this firmware puts the low word first — the kind of thing field verification finds
+  timeout: 2s        # Wi-Fi link; the default 1s is tight
+
+gh-node-2:
+  host: 192.168.50.12
+  unit: 1
+  order: CDAB
+  timeout: 2s

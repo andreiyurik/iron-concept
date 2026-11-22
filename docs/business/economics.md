@@ -44,7 +44,7 @@ Traditional SCADA deployment (mid-size plant):
 
 IRON deployment (target):
   Licenses:                             $0
-  Hardware (commodity, incl. HA pair):  $500–5,000
+  Hardware (commodity, incl. standby):  $500–5,000
   Integrator, weeks not months:         spec-driven setup + iron field
   Annual:                               optional support contract
 ```

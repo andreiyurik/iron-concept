@@ -1,7 +1,7 @@
 ---
 status: draft
 type: spec
-depends-on: [tag-model, alarm-engine, command-path]
+depends-on: [tag-model, alarm-engine, command-path, expressions]
 ---
 
 # Device Types
@@ -77,10 +77,16 @@ resulting YAML).
 ## Normative rules
 
 - A type MUST keep tags and commands in separate sections; expansion writes
-  them to separate config trees, preserving READ/WRITE separation.
-- Parameter substitution is explicit (`{param}`) with compile-time arithmetic
-  only — no runtime evaluation, nothing Turing-complete. If a type needs
-  logic, it needs a WASM module or a developer, not a templating language.
+  them to separate config trees, preserving READ/WRITE separation. `REQ-TYP-001 unit`
+- Parameter substitution is explicit (`{…}`) and evaluated once, at
+  expansion, in the expansion context of the one expression language
+  ([expressions.md](expressions.md)) — the same grammar as derived tags,
+  with type parameters as the only names. Nothing Turing-complete, no second
+  templating syntax.
+- A type MAY contain derived tags. Substitution happens first, so
+  `derived: "{instance}.current / {rated_current} * 100"` expands to an
+  ordinary runtime expression over the instance's tags. Logic beyond that is
+  a plugin ([extensions.md](extensions.md)).
 - Types MAY extend other types (`extends: pump`), single inheritance only.
 - Changing a type re-expands all instances; `iron validate` reports the full
   diff of effective configuration, so a one-line type edit that touches 40
@@ -95,12 +101,17 @@ input:
 ```bash
 iron generate from-io-list ./P-2024-117_IO_List.xlsx \
   --map "Tag No=name, Description=description, Range Min=range.0, \
-         Range Max=range.1, Signal=signal_type, Address=source"
+         Range Max=range.1, Signal=signal, Address=source"
 
 # → generates config/tags/*.yaml (and a report of rows it could not map)
 # ✅ 412 tags generated
 # ⚠️  17 rows skipped: no address column value (listed in import-report.md)
 ```
+
+The importer converts datasheet address notation (`40001`) to the zero-based
+protocol addresses that source URIs require
+([protocol-drivers.md](protocol-drivers.md)) and lists every conversion in
+the report.
 
 Combined with device types (`--type-by "Equipment Type"` maps rows to
 instances), an integrator turns the project IO list into validated

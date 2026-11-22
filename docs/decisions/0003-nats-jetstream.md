@@ -15,11 +15,18 @@ operable by a 5-person integrator — not a platform team.
 
 NATS JetStream: single ~15MB binary with no dependencies, ~30MB RAM at rest,
 at-least-once delivery with replay, subject hierarchy that mirrors plant
-topology (`plant.line_1.reactor_01.temperature`) with wildcard subscriptions,
-and per-identity subject-level authorization — which is what makes the
-READ/WRITE transport separation enforceable
+topology (`data.<site>.line_1.reactor_01.temperature`) with wildcard
+subscriptions, and per-identity subject-level authorization — which is what
+makes the READ/WRITE transport separation enforceable
 ([specs/read-write-separation.md](../specs/read-write-separation.md)).
 Subjects implement the Unified Namespace: one canonical address per tag.
+
+NATS is a **binding** of the transport contract, not the contract itself.
+What edge and server may assume about each other is specified in
+[specs/transport.md](../specs/transport.md) without reference to any broker,
+and the default single-binary deployment satisfies the same contract with
+in-process channels. Application code is written against the contract.
+Commands use core NATS only and are never captured by a stream.
 
 ## Alternatives
 
@@ -45,6 +52,14 @@ At-least-once means duplicates: consumers deduplicate on `(tag, timestamp)`
 below core-NATS marketing numbers — still orders of magnitude above plant
 needs. One more moving part than "just Postgres LISTEN/NOTIFY"; accepted for
 the buffering and replay semantics.
+
+Durability is partly redundant: the edge already buffers and resends until
+acknowledged, and the historian already deduplicates, so JetStream is not
+what makes data survive an outage. What it adds is server restart catch-up,
+subject-level authorization, and a place for plugins to attach. That is
+worth a broker at plant scale; whether it is worth one for a site with a
+single remote edge is an open question, answered by the deferred direct
+binding ([deferred.md](../business/deferred.md)) if a real site asks.
 
 ## Revisit when
 
