@@ -100,6 +100,8 @@ pub enum ErrorKind {
     UnknownReference,
     /// An operand of the wrong type.
     TypeMismatch,
+    /// The two branches of `if` have different types (REQ-EXP-001).
+    IfBranches,
     /// Not one of the built-in functions.
     UnknownFunction,
     /// Wrong number of arguments.
@@ -504,7 +506,7 @@ impl Expr {
                 let t = args[1].check(types)?;
                 if args[2].check(types)? != t {
                     return err(
-                        ErrorKind::TypeMismatch,
+                        ErrorKind::IfBranches,
                         0,
                         "both branches of if() must have the same type",
                     );

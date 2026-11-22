@@ -1,0 +1,46 @@
+//! Reading a project from disk.
+
+use crate::validate::Files;
+use std::io;
+use std::path::Path;
+
+/// Reads every YAML file under `<root>/config` into memory, keyed by its
+/// path relative to `root` with `/` separators.
+///
+/// Fails with `NotFound` when `<root>/config/tags` does not exist: a project
+/// containing only `config/tags/` is complete, and one without it is not a
+/// project (`docs/specs/cli.md`, the complexity budget).
+pub fn load(root: &Path) -> io::Result<Files> {
+    if !root.join("config/tags").is_dir() {
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!(
+                "{} is not an IRON project: config/tags/ not found",
+                root.display()
+            ),
+        ));
+    }
+    let mut files = Files::new();
+    walk(root, &root.join("config"), &mut files)?;
+    Ok(files)
+}
+
+fn walk(root: &Path, dir: &Path, files: &mut Files) -> io::Result<()> {
+    let mut entries: Vec<_> = std::fs::read_dir(dir)?.collect::<Result<_, _>>()?;
+    entries.sort_by_key(std::fs::DirEntry::path);
+    for entry in entries {
+        let path = entry.path();
+        if path.is_dir() {
+            walk(root, &path, files)?;
+        } else if path.extension().is_some_and(|e| e == "yaml" || e == "yml") {
+            let rel: Vec<String> = path
+                .strip_prefix(root)
+                .unwrap_or(&path)
+                .components()
+                .map(|c| c.as_os_str().to_string_lossy().into_owned())
+                .collect();
+            files.insert(rel.join("/"), std::fs::read_to_string(&path)?);
+        }
+    }
+    Ok(())
+}
