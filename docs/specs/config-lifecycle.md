@@ -104,6 +104,49 @@ through Git.
 - Acknowledging and shelving are alarm *state*, not configuration, and are
   unaffected by this section ([alarm-engine.md](alarm-engine.md)).
 
+## Editing configuration
+
+People edit spec files in an editor. Programs edit them through `iron-core`
+and in no other way
+([ADR 0014](../decisions/0014-config-edits-as-core-operations.md)).
+
+### The file format: a lossless subset of YAML
+
+- Configuration files MUST be UTF-8 YAML restricted to: block mappings and
+  sequences, single-line flow mappings and sequences for leaf values
+  (`range: [0, 200]`), plain and quoted scalars, and comments. Anchors,
+  aliases, merge keys, explicit tags, multi-document files, multi-line flow
+  collections, and duplicate keys are not allowed; `iron validate` MUST
+  reject them with a diagnostic. `REQ-CFG-005 integration`
+- Reading a file and writing it back with no edit MUST reproduce it
+  byte-for-byte. `REQ-CFG-006 integration`
+
+### Edit operations
+
+A closed set, implemented once in `iron-core`:
+
+| Operation | Does |
+|---|---|
+| `set` | Change the value at an existing path, or add a field to an existing entry |
+| `add` | Add a new entry (tag, alarm, instance, command, binding) to a file |
+| `remove` | Remove an entry |
+
+- An edit operation MUST leave every byte it did not change untouched —
+  comments, ordering, indentation, quoting. `REQ-CFG-007 integration`
+- An edit operation MUST validate the resulting project and MUST NOT write a
+  result that fails validation; it returns the diagnostics instead. `REQ-CFG-008 integration`
+- Edit operations write to a project working tree. They never commit, and
+  they MUST NOT run against the configuration of a deployed target: a
+  running site changes only by deploy or by adjustment. `REQ-CFG-009 integration`
+- Every program that changes configuration — `iron diff --pull`,
+  `iron generate`, `iron upgrade`, and any future form, binding tool, or
+  agent tool — MUST do so through these operations. `REQ-CFG-010 integration`
+
+In v1 the operations have three callers, all in the CLI. Forms in the web
+UI and click-to-bind for mimics are *deferred*
+([business/deferred.md](../business/deferred.md)); when they arrive they run
+inside `iron dev` on a workstation and call the same operations.
+
 ## Drift, and the way back to Git
 
 `iron diff` compares the committed config at Git HEAD with the effective

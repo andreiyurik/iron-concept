@@ -105,11 +105,17 @@ env:
   clear: { IRON_HOST: iron.local, NATS_URL: "nats://nats:4222" }
   secret: [IRON_SECRET_KEY, DATABASE_URL]
 accessories:
-  db:   { image: timescale/timescaledb:latest-pg16, host: 192.168.1.100,
-          port: "127.0.0.1:5432:5432", volumes: ["/var/lib/iron/postgres:/var/lib/postgresql/data"] }
-  nats: { image: nats:latest, host: 192.168.1.100,
-          port: "127.0.0.1:4222:4222", cmd: "-js --store_dir /data",
-          volumes: ["/var/lib/iron/nats:/data"] }
+  db:
+    image: timescale/timescaledb:latest-pg16
+    host: 192.168.1.100
+    port: "127.0.0.1:5432:5432"
+    volumes: ["/var/lib/iron/postgres:/var/lib/postgresql/data"]
+  nats:
+    image: nats:latest
+    host: 192.168.1.100
+    port: "127.0.0.1:4222:4222"
+    cmd: "-js --store_dir /data"
+    volumes: ["/var/lib/iron/nats:/data"]
 ```
 
 Secrets live in `.kamal/secrets` (gitignored). Then:

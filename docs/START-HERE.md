@@ -105,8 +105,8 @@ docs/
     operations.md          observability, format version, backup, engineering gates
     plc-runtime.md         long-term exploration (clearly gated)
 
-  decisions/               ← WHY — one ADR per choice (0009–0013: Rust server, Svelte, AI-native surface,
-                             one expression language, bounded runtime adjustments)
+  decisions/               ← WHY — one ADR per choice (0009–0014: Rust server, Svelte, AI-native surface,
+                             one expression language, bounded runtime adjustments, edits as core operations)
   ../examples/greenhouse/  ← a complete example site in the target format
   ../conformance/          ← test vectors: inputs and required outputs
   business/                ← model, economics, roadmap, deferred (ideas with triggers)

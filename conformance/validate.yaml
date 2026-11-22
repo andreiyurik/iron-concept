@@ -130,3 +130,12 @@ cases:
           q: { derived: "a.p + 1", type: float32, range: [0, 9] }
     expect:
       - { severity: error, path: a.p.derived, requirement: REQ-EXP-003 }
+
+  - name: YAML anchors and merge keys are outside the subset
+    files:
+      config/tags/a.yaml: |
+        a:
+          x: &base { source: "modbus://10.0.0.5/holding/0", type: float32, range: [0, 1] }
+          y: { <<: *base, source: "modbus://10.0.0.5/holding/2" }
+    expect:
+      - { severity: error, path: a.x, requirement: REQ-CFG-005 }

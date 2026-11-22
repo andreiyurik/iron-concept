@@ -20,6 +20,7 @@ support are in [../specs/](../specs/).
 | [0011](0011-ai-native-surface.md) | AI-native surface: one core, two interfaces (CLI + MCP) | Accepted |
 | [0012](0012-one-expression-language.md) | One small expression language, not a scripting language | Accepted |
 | [0013](0013-bounded-runtime-adjustments.md) | Git is the source of truth, with bounded runtime adjustments | Accepted |
+| [0014](0014-config-edits-as-core-operations.md) | Configuration edits are core operations on a lossless YAML subset | Accepted |
 
 ## Proposing a decision
 

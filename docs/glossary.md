@@ -21,6 +21,7 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **Transport** | The contract between the edge and server roles — message kinds, delivery guarantees, session — with two bindings: in-process channels and NATS JetStream. Spec: [specs/transport.md](specs/transport.md) |
 | **Committed / effective config** | Committed: the spec files at a Git commit. Effective: committed config plus adjustments — what actually runs. Spec: [specs/config-lifecycle.md](specs/config-lifecycle.md) |
 | **Adjustment** | An audited change to an alarm's limit, hysteresis, or delays made on a running site; reported by `iron diff`, returned to Git with `iron diff --pull`. Nothing else is adjustable |
+| **Edit operation** | One of the closed set of `iron-core` operations (`set`, `add`, `remove`) through which every program changes configuration files, losslessly. Spec: [specs/config-lifecycle.md](specs/config-lifecycle.md) |
 | **Config hash** | Hash of the effective configuration; two targets with the same hash run the same configuration. Carried in the session handshake and in every command |
 | **Alarm** | A defined abnormal condition that notifies humans. Detected at the edge, managed at the server, **never** triggers commands. Spec: [specs/alarm-engine.md](specs/alarm-engine.md) |
 | **Ack / RTN / shelving** | Alarm lifecycle terms (ISA-18.2): operator acknowledgment; return-to-normal; temporary audited muting of a nuisance alarm |

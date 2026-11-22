@@ -17,7 +17,25 @@ addressing, how polls are grouped, and what happens when a device misbehaves.
 
 ## The driver contract
 
-A driver turns one *connection* and a set of *points* into samples.
+A driver turns one *connection* and a set of *points* into samples. The
+contract has two acquisition modes, because field protocols come in two
+kinds and a contract shaped by the first would not fit the second:
+
+| Mode | The driver | Protocols |
+|---|---|---|
+| **Polled** | Reads points when the agent asks | Modbus, S7, direct I/O |
+| **Subscribed** | Registers points once; the device or broker pushes changes | OPC-UA, MQTT |
+
+Everything after acquisition is identical for both: conversion, quality,
+derived tags, deadband, alarms. For a subscribed point:
+
+- `scan_rate` is the sampling interval requested from the device, not a
+  polling period; the timestamp is the device's when the protocol provides
+  one, with the agent's also kept ([edge-agent.md](edge-agent.md)).
+- The driver MUST detect a dead subscription through the protocol's own
+  keep-alive and report it; silence alone is not evidence that a value is
+  unchanged. Quality then follows the same transitions as a failed poll. `REQ-DRV-012 integration`
+- The polling rules below do not apply; the supervision rules do.
 
 - A driver exposes two separate capabilities: a **read handle** used by the
   polling engine and a **write handle** used only by the command executor.
@@ -90,6 +108,8 @@ Normative rules:
   assembled from two requests. `REQ-DRV-002 integration`
 
 ## Polling
+
+For polled drivers.
 
 - Points on the same connection, table, and scan rate form a **scan group**.
 - Within a scan group the driver MUST coalesce adjacent addresses into
