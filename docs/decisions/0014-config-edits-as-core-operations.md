@@ -57,10 +57,14 @@ they will have nothing to invent when they are.
 
 ## Trade-offs
 
-- IRON owns a lossless reader/writer for its YAML subset, or depends on a
-  library that provides one. This must be verified against real libraries
-  before the first line of the validator is written; it is the largest
-  unknown this ADR introduces.
+- IRON depends on a library for lossless reading and writing of its YAML
+  subset. Checked before any code was written: two published crates,
+  `yaml-edit` 0.3.6 and `oneyaml` 1.2.0, each reproduced every file of
+  `examples/greenhouse` byte-for-byte and changed exactly one line when one
+  alarm limit was set. That retires the feasibility risk; it does not choose
+  between them. The choice is made in `iron-core` on maintenance history,
+  licence, and behavior on `add` and `remove`, which the check did not
+  exercise in depth.
 - Users lose YAML features some of them like, anchors above all. Device
   types are the intended answer to repetition.
 - The closed set of operations will feel small. Each addition is a new
