@@ -78,14 +78,14 @@ plc-01:
 ## Modbus addressing
 
 ```
-modbus://<host>/<table>/<address>[.<bit>][?order=<order>]
+modbus://<host>/<table>/<address>[?bit=<n>][&order=<order>]
 ```
 
 | Part | Values |
 |---|---|
 | `table` | `coil` (read FC01, write FC05) · `discrete` (FC02) · `holding` (read FC03, write FC06/FC16) · `input` (FC04) |
 | `address` | **Zero-based protocol address**, decimal or `0x` hex |
-| `.bit` | Bit 0–15 of a 16-bit register, for `bool` tags packed into a status word |
+| `?bit=` | Bit 0–15 of a holding or input register, for `bool` tags packed into a status word |
 | `?order=` | Per-tag override of the connection's byte order |
 
 Normative rules:
@@ -93,15 +93,20 @@ Normative rules:
 - Addresses are zero-based protocol addresses — what goes on the wire.
   Datasheet notations such as `40001` or `4x0001` are **not** accepted in a
   source URI; `iron validate` MUST reject them with a hint giving the converted
-  address. `iron generate from-io-list` performs the conversion on import
+  address. The check applies to decimal addresses that look like the
+  notation (`4xxxx` on holding registers, `3xxxx` on input registers); an
+  address written in hexadecimal is always taken literally, which is how a
+  genuine protocol address in that range is expressed.
+  `iron generate from-io-list` performs the conversion on import
   ([device-types.md](device-types.md)). `REQ-DRV-009 integration`
 - The tag `type` decides how many registers are read: `int16`/`uint16` one,
   `int32`/`uint32`/`float32` two, `float64` four. A `bool` reads one coil or
-  discrete input, or one bit of a register when `.bit` is given.
+  discrete input, or one bit of a register when `bit` is given.
 - Decoding MUST follow `order`, which names the position of the value's bytes on the wire: `ABCD`
   (big-endian, the Modbus convention), `CDAB` (word-swapped), `BADC`
-  (byte-swapped), `DCBA` (little-endian). The same four letters apply to
-  64-bit values pairwise. A wrong `order` is the most common cause of a
+  (byte-swapped), `DCBA` (little-endian). For a 64-bit value
+  the same four orders apply to its four words: `CDAB` reverses the word
+  order, `BADC` swaps the bytes inside each word, `DCBA` does both. A wrong `order` is the most common cause of a
   plausible-looking wrong number; [field verification](field-verification.md)
   is what catches it. `REQ-DRV-010 integration`
 - A multi-register value MUST be read in a single request. It is never

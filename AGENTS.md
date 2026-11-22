@@ -1,8 +1,10 @@
 # Working on iron-concept
 
-This repository is a **documentation-only engineering blueprint** for IRON —
-an open-source SCADA platform. There is no code yet, by design. If you are an
-agent (or a human) editing it, these are the rules everything else follows.
+This repository holds IRON — an open-source SCADA platform — as an
+engineering blueprint (`docs/`) and the implementation growing out of it
+(`crates/`). The specs come first: code implements a numbered requirement,
+it does not invent behavior. If you are an agent (or a human) editing it,
+these are the rules everything else follows.
 
 ## The two hard rules
 
@@ -76,11 +78,26 @@ agent (or a human) editing it, these are the rules everything else follows.
   naming its identifier; third-party APIs are checked against the pinned
   version's documentation, not recalled (`docs/specs/operations.md`).
 
+## Code
+
+- A Cargo workspace: `crates/iron-domain` is pure logic with **no runtime
+  dependencies** and no I/O; keep it that way. Crates are added when a
+  feature needs them, not ahead of it.
+- `unsafe` is forbidden workspace-wide. Warnings are errors in CI.
+- Tests read the vectors in `conformance/` directly. If a vector and the
+  code disagree, decide which is wrong against the spec — never edit a
+  vector just to make a test pass.
+- A test names the requirement it proves (`REQ-…`) in a comment or its
+  name.
+- Before using a third-party crate's API, read the pinned version's own
+  documentation or source; do not rely on memory of it.
+
 ## Before committing
 
 ```bash
 python3 scripts/requirements.py   # assign ids to new MUSTs, regenerate the index
 python3 scripts/lint-docs.py      # links · English-only · frontmatter · honesty · requirements
+cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 ```
 
 Diagrams are hand-authored SVG in `docs/assets/`; preview with

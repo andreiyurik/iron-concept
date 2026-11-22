@@ -1,0 +1,19 @@
+[package]
+name = "iron-domain"
+description = "IRON's pure domain logic: values, quality, expressions, decoding, scaling, publish filter. No I/O."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+# Deliberately no runtime dependencies: this crate is pure logic and must
+# compile for native and wasm32 alike (docs/decisions/0009).
+[dependencies]
+
+[dev-dependencies]
+oneyaml = "1.2.0"
+serde_json = "1"
