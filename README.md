@@ -51,6 +51,9 @@ runtimes, or a vendor between you and your own plant.
 > decision records, honest competitive analysis), published openly *before*
 > the code, the way serious infrastructure gets built. The prototype
 > (`iron new` → Modbus TCP → live dashboard) is the current milestone.
+> The first command exists: `iron validate` checks a project against the
+> specs and passes the [conformance vectors](conformance/README.md); nothing
+> else runs yet.
 > **This is the best moment to influence the design** — and the earliest
 > possible moment to say "I was here before v0.1". The first release is
 > deliberately small; what waits, and what brings it back, is in

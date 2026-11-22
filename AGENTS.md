@@ -81,7 +81,12 @@ these are the rules everything else follows.
 ## Code
 
 - A Cargo workspace: `crates/iron-domain` is pure logic with **no runtime
-  dependencies** and no I/O; keep it that way. Crates are added when a
+  dependencies** and no I/O; keep it that way. `crates/iron-core` holds
+  the operations (project loading, `validate`) and is the only crate that
+  touches the YAML library; `crates/iron-cli` is the `iron` binary and
+  contains no logic of its own.
+- Diagnostic codes live in `crates/iron-core/src/diag.rs`. A code is
+  assigned once and never reused or renumbered. Crates are added when a
   feature needs them, not ahead of it.
 - `unsafe` is forbidden workspace-wide. Warnings are errors in CI.
 - Tests read the vectors in `conformance/` directly. If a vector and the

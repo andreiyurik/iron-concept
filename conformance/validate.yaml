@@ -131,6 +131,8 @@ cases:
     expect:
       - { severity: error, path: a.p.derived, requirement: REQ-EXP-003 }
 
+  # Both constructs are reported: the anchor where it is defined, the merge
+  # key where it is used.
   - name: YAML anchors and merge keys are outside the subset
     files:
       config/tags/a.yaml: |
@@ -139,3 +141,4 @@ cases:
           y: { <<: *base, source: "modbus://10.0.0.5/holding/2" }
     expect:
       - { severity: error, path: a.x, requirement: REQ-CFG-005 }
+      - { severity: error, path: a.y, requirement: REQ-CFG-005 }
