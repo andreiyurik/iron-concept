@@ -1,0 +1,39 @@
+# Registers as read from the wire (16-bit, in address order) → value.
+modbus:
+  - { requirement: REQ-DRV-010, type: float32, order: ABCD, registers: [0x42F6, 0xE979], expect: 123.456, tol: 1e-4 }
+  - { requirement: REQ-DRV-010, type: float32, order: CDAB, registers: [0xE979, 0x42F6], expect: 123.456, tol: 1e-4 }
+  - { requirement: REQ-DRV-010, type: float32, order: BADC, registers: [0xF642, 0x79E9], expect: 123.456, tol: 1e-4 }
+  - { requirement: REQ-DRV-010, type: float32, order: DCBA, registers: [0x79E9, 0xF642], expect: 123.456, tol: 1e-4 }
+  - { type: int32, order: ABCD, registers: [0xFFFE, 0x7960], expect: -100000 }
+  - { type: uint32, order: ABCD, registers: [0xFFFE, 0x7960], expect: 4294867296 }
+  - { type: int16, registers: [0xFFFF], expect: -1 }
+  - { type: uint16, registers: [0xFFFF], expect: 65535 }
+  - { type: float64, order: ABCD, registers: [0x3FF8, 0x0000, 0x0000, 0x0000], expect: 1.5 }
+  - { type: bool, bit: 3, registers: [0x0008], expect: true }
+  - { type: bool, bit: 2, registers: [0x0008], expect: false }
+
+# Raw value → engineering value and quality.
+scaling:
+  - { scaling: { raw: [4, 20], engineering: [0, 200] }, raw: 14.4, expect: { value: 130.0, quality: GOOD } }
+  - { scaling: { raw: [4, 20], engineering: [0, 200] }, raw: 4, expect: { value: 0.0, quality: GOOD } }
+  - { scaling: { raw: [0, 27648], engineering: [0, 200] }, raw: 13824, expect: { value: 100.0, quality: GOOD } }
+  - name: broken wire clamps and degrades
+    requirement: REQ-TAG-009
+    scaling: { raw: [4, 20], engineering: [0, 200] }
+    raw: 3.5
+    expect: { value: 0.0, quality: UNCERTAIN }
+  - name: saturated input clamps and degrades
+    requirement: REQ-TAG-009
+    scaling: { raw: [4, 20], engineering: [0, 200] }
+    raw: 21
+    expect: { value: 200.0, quality: UNCERTAIN }
+  - name: no scaling field means no conversion
+    requirement: REQ-TAG-011
+    range: [0, 200]
+    raw: 87.5
+    expect: { value: 87.5, quality: GOOD }
+  - name: out of range without scaling is published as read
+    requirement: REQ-TAG-012
+    range: [0, 200]
+    raw: 250
+    expect: { value: 250, quality: UNCERTAIN }

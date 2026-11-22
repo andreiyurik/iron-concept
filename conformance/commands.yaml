@@ -1,0 +1,48 @@
+# What the edge does with a received command. Times are server time in
+# seconds; `offset_known` is whether the edge has a clock-offset estimate.
+edge:
+  state:
+    now: 1000
+    offset_known: true
+    config_hash: aaa
+    declared: [site.vent_setpoint]
+    seen_ids: [c-0007]
+  cases:
+    - name: valid command
+      command: { id: c-0008, command: site.vent_setpoint, value: 40, issued_at: 998, ttl: 10, config_hash: aaa }
+      expect: accepted
+    - name: expired
+      requirement: REQ-CMD-001
+      command: { id: c-0009, command: site.vent_setpoint, value: 40, issued_at: 989, ttl: 10, config_hash: aaa }
+      expect: { rejected: expired }
+    - name: no clock estimate
+      requirement: REQ-CMD-001
+      state: { offset_known: false }
+      command: { id: c-0010, command: site.vent_setpoint, value: 40, issued_at: 998, ttl: 10, config_hash: aaa }
+      expect: { rejected: no_clock_estimate }
+    - name: duplicate id
+      requirement: REQ-CMD-005
+      command: { id: c-0007, command: site.vent_setpoint, value: 40, issued_at: 998, ttl: 10, config_hash: aaa }
+      expect: { rejected: duplicate }
+    - name: config hash differs
+      requirement: REQ-CMD-006
+      command: { id: c-0011, command: site.vent_setpoint, value: 40, issued_at: 998, ttl: 10, config_hash: bbb }
+      expect: { rejected: config_mismatch }
+    - name: command not declared on the edge
+      requirement: REQ-RWS-008
+      command: { id: c-0012, command: site.heater_on, value: true, issued_at: 998, ttl: 10, config_hash: aaa }
+      expect: { rejected: unknown_command }
+
+# Final lifecycle state for a whole command.
+lifecycle:
+  - name: edge offline at issue — expires, and is not delivered after reconnect
+    requirement: REQ-CMD-004
+    events: [issue, { edge: offline }, { wait: 15 }, { edge: reconnect }]
+    expect: { state: EXPIRED, protocol_writes: 0 }
+  - name: read-back differs from the written value
+    requirement: REQ-CMD-007
+    events: [issue, { write: 40 }, { read_back: 0 }]
+    expect: { state: FAILED }
+  - name: feedback tag never reaches the expected state
+    events: [issue, { write: 40 }, { read_back: 40 }, { wait_feedback_timeout: true }]
+    expect: { state: FAILED }

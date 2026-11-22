@@ -1,0 +1,21 @@
+# The edge publish filter. Each step is a new scan result; `publish` is the
+# decision. `t` is seconds. A published step becomes the new last_published.
+cases:
+  - name: deadband, quality change, heartbeat
+    config: { deadband: 0.5, max_publish_interval: 60 }
+    last_published: { t: 0, value: 87.3, quality: GOOD }
+    steps:
+      - { t: 1, value: 87.4, quality: GOOD, publish: false }
+      - { t: 2, value: 87.9, quality: GOOD, publish: true, requirement: REQ-EDG-001 }
+      - { t: 3, value: 87.9, quality: UNCERTAIN, publish: true, requirement: REQ-EDG-002 }
+      - { t: 62, value: 87.9, quality: UNCERTAIN, publish: false }
+      - { t: 63, value: 87.9, quality: UNCERTAIN, publish: true, requirement: REQ-EDG-004 }
+
+  - name: an alarm-limit crossing inside the deadband still publishes
+    config: { deadband: 0.5, max_publish_interval: 60, alarm_limits: [180] }
+    last_published: { t: 0, value: 179.8, quality: GOOD }
+    steps:
+      - { t: 1, value: 179.9, quality: GOOD, publish: false }
+      - { t: 2, value: 180.2, quality: GOOD, publish: true, requirement: REQ-EDG-003 }
+      - { t: 3, value: 180.4, quality: GOOD, publish: false }
+      - { t: 4, value: 179.9, quality: GOOD, publish: true, requirement: REQ-EDG-003 }
