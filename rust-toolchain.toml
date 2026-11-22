@@ -1,0 +1,4 @@
+# Pinned so that CI and every workstation lint with the same compiler.
+[toolchain]
+channel = "1.98.1"
+components = ["rustfmt", "clippy"]

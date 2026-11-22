@@ -787,10 +787,8 @@ impl Validator<'_> {
                     );
                 }
             }
-            for d in ["timeout"] {
-                if let Some(n) = c.value.get(d) {
-                    self.duration(file, &format!("{}.{d}", c.key), n);
-                }
+            if let Some(n) = c.value.get("timeout") {
+                self.duration(file, &format!("{}.timeout", c.key), n);
             }
         }
     }
