@@ -1,0 +1,132 @@
+# Project files in, diagnostics out. `files` are paths inside a project.
+# `expect: []` means the project is valid.
+cases:
+  - name: tags-only project is complete
+    files:
+      config/tags/a.yaml: |
+        a:
+          temp: { source: "modbus://10.0.0.5/holding/0", type: float32, unit: "°C", range: [0, 200] }
+    expect: []
+
+  - name: alarm limit outside range
+    files:
+      config/tags/a.yaml: |
+        a:
+          temp:
+            source: "modbus://10.0.0.5/holding/0"
+            type: float32
+            range: [0, 200]
+            alarms: { high_high: { limit: 220, priority: 1, message: m } }
+    expect:
+      - { severity: error, path: a.temp.alarms.high_high.limit, requirement: REQ-TAG-003 }
+
+  - name: alarm limits out of order
+    files:
+      config/tags/a.yaml: |
+        a:
+          temp:
+            source: "modbus://10.0.0.5/holding/0"
+            type: float32
+            range: [0, 200]
+            alarms:
+              high: { limit: 190, priority: 2, message: m }
+              high_high: { limit: 180, priority: 1, message: m }
+    expect:
+      - { severity: error, path: a.temp.alarms, requirement: REQ-TAG-004 }
+
+  - name: both source and derived
+    files:
+      config/tags/a.yaml: |
+        a:
+          x: { source: "modbus://10.0.0.5/holding/0", type: float32, range: [0, 1] }
+          y: { source: "modbus://10.0.0.5/holding/2", derived: "a.x * 2", type: float32, range: [0, 2] }
+    expect:
+      - { severity: error, path: a.y, requirement: REQ-TAG-002 }
+
+  - name: neither source nor derived
+    files:
+      config/tags/a.yaml: |
+        a:
+          x: { type: bool }
+    expect:
+      - { severity: error, path: a.x, requirement: REQ-TAG-002 }
+
+  - name: unknown source scheme
+    files:
+      config/tags/a.yaml: |
+        a:
+          x: { source: "profibus://10.0.0.5/1", type: bool }
+    expect:
+      - { severity: error, path: a.x.source, requirement: REQ-TAG-005 }
+
+  - name: reserved name
+    files:
+      config/tags/a.yaml: |
+        _iron:
+          x: { source: "modbus://10.0.0.5/coil/0", type: bool }
+    expect:
+      - { severity: error, path: _iron, requirement: REQ-TAG-007 }
+
+  - name: same tag defined in two files
+    files:
+      config/tags/a.yaml: |
+        a:
+          x: { source: "modbus://10.0.0.5/coil/0", type: bool }
+      config/tags/b.yaml: |
+        a:
+          x: { source: "modbus://10.0.0.5/coil/1", type: bool }
+    expect:
+      - { severity: error, path: a.x, requirement: REQ-TAG-006 }
+
+  - name: writable target in a tag file
+    files:
+      config/tags/a.yaml: |
+        a:
+          x: { source: "modbus://10.0.0.5/coil/0", target: "modbus://10.0.0.5/coil/0", type: bool }
+    expect:
+      - { severity: error, path: a.x.target, requirement: REQ-RWS-002 }
+
+  - name: datasheet address notation
+    files:
+      config/tags/a.yaml: |
+        a:
+          x: { source: "modbus://10.0.0.5/holding/40001", type: uint16, range: [0, 100] }
+    expect:
+      - { severity: error, path: a.x.source, requirement: REQ-DRV-009 }
+
+  - name: expression type mismatch
+    files:
+      config/tags/a.yaml: |
+        a:
+          run: { source: "modbus://10.0.0.5/coil/0", type: bool }
+          amps: { source: "modbus://10.0.0.5/holding/0", type: float32, range: [0, 50] }
+          bad: { derived: "a.run + a.amps", type: float32, range: [0, 50] }
+    expect:
+      - { severity: error, path: a.bad.derived, requirement: REQ-EXP-002 }
+
+  - name: if branches of different types
+    files:
+      config/tags/a.yaml: |
+        a:
+          run: { source: "modbus://10.0.0.5/coil/0", type: bool }
+          amps: { source: "modbus://10.0.0.5/holding/0", type: float32, range: [0, 50] }
+          bad: { derived: "if(a.run, a.amps, false)", type: float32, range: [0, 50] }
+    expect:
+      - { severity: error, path: a.bad.derived, requirement: REQ-EXP-001 }
+
+  - name: unknown reference
+    files:
+      config/tags/a.yaml: |
+        a:
+          y: { derived: "a.missing * 2", type: float32, range: [0, 2] }
+    expect:
+      - { severity: error, path: a.y.derived, requirement: REQ-EXP-005 }
+
+  - name: cycle among derived tags
+    files:
+      config/tags/a.yaml: |
+        a:
+          p: { derived: "a.q + 1", type: float32, range: [0, 9] }
+          q: { derived: "a.p + 1", type: float32, range: [0, 9] }
+    expect:
+      - { severity: error, path: a.p.derived, requirement: REQ-EXP-003 }

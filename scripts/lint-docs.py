@@ -9,12 +9,16 @@ that to the docs themselves. Checks (all failing):
   3. Frontmatter with `status:` and `type:` on every normative doc
      (docs/{specs,decisions,vision,business,guides}/*.md, README.md exempt).
   4. No marketing superlatives (honest-by-policy).
+  5. Every MUST in the specs has a requirement identifier, the index is
+     current, and conformance vectors cite only identifiers that exist
+     (delegated to scripts/requirements.py --check).
 
 Run from the repository root: python3 scripts/lint-docs.py
 """
 import glob
 import os
 import re
+import subprocess
 import sys
 
 errors: list[str] = []
@@ -58,6 +62,14 @@ for f in glob.glob("**/*.md", recursive=True):
     for i, line in enumerate(open(f, encoding="utf-8"), 1):
         if FORBIDDEN.search(line):
             errors.append(f"{f}:{i}: marketing superlative — say what it does instead")
+
+# 5. Requirement identifiers --------------------------------------------------
+req = subprocess.run(
+    [sys.executable, os.path.join(os.path.dirname(__file__), "requirements.py"), "--check"],
+    capture_output=True, text=True,
+)
+if req.returncode != 0:
+    errors.extend(l.strip() for l in req.stdout.splitlines()[1:])
 
 if errors:
     print(f"❌ {len(errors)} problem(s):")

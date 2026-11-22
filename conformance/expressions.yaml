@@ -1,0 +1,61 @@
+# Expression + inputs → result. Input quality defaults to GOOD.
+runtime:
+  - { expr: "2 + 3 * 4", expect: { value: 14 } }
+  - { expr: "(2 + 3) * 4", expect: { value: 20 } }
+  - { expr: "0x10 + 1", expect: { value: 17 } }
+  - { expr: "7 % 4", expect: { value: 3 } }
+  - { expr: "min(3, 1, 2)", expect: { value: 1 } }
+  - { expr: "pow(2, 10)", expect: { value: 1024 } }
+  - { expr: "!(true && false)", expect: { value: true } }
+  - { expr: "clamp(a.x, 0, 100)", inputs: { a.x: { value: 150 } }, expect: { value: 100 } }
+  - { expr: "-a.x", inputs: { a.x: { value: 2.5 } }, expect: { value: -2.5 } }
+  - { expr: "a.x - a.y", inputs: { a.x: { value: 10 }, a.y: { value: 4 } }, expect: { value: 6, quality: GOOD } }
+
+  - name: quality is the worst of the inputs
+    requirement: REQ-EXP-007
+    expr: "a.x - a.y"
+    inputs: { a.x: { value: 10 }, a.y: { value: 4, quality: UNCERTAIN } }
+    expect: { value: 6, quality: UNCERTAIN }
+
+  - name: a BAD input makes the result BAD
+    requirement: REQ-EXP-007
+    expr: "a.x - a.y"
+    inputs: { a.x: { value: 10 }, a.y: { value: 4, quality: BAD } }
+    expect: { quality: BAD }
+
+  - name: the branch not taken still counts toward quality
+    requirement: REQ-EXP-007
+    expr: "if(a.sel, a.x, a.y)"
+    inputs: { a.sel: { value: true }, a.x: { value: 1 }, a.y: { value: 2, quality: BAD } }
+    expect: { quality: BAD }
+
+  - { name: division by zero, requirement: REQ-EXP-006, expr: "a.x / a.y", inputs: { a.x: { value: 1 }, a.y: { value: 0 } }, expect: { quality: BAD } }
+  - { name: sqrt of a negative, requirement: REQ-EXP-006, expr: "sqrt(a.x)", inputs: { a.x: { value: -1 } }, expect: { quality: BAD } }
+  - { name: ln of zero, requirement: REQ-EXP-006, expr: "ln(a.x)", inputs: { a.x: { value: 0 } }, expect: { quality: BAD } }
+  - { name: overflow to infinity, requirement: REQ-EXP-006, expr: "exp(a.x)", inputs: { a.x: { value: 1000 } }, expect: { quality: BAD } }
+
+  - name: vapour-pressure deficit, as in examples/greenhouse
+    expr: "0.6108 * exp(17.27 * z.t / (z.t + 237.3)) * (1 - z.rh / 100)"
+    inputs: { z.t: { value: 25 }, z.rh: { value: 60 } }
+    expect: { value: 1.267111, tol: 1e-5, quality: GOOD }
+
+# suppressed_when: the result is whether the alarm is suppressed.
+suppression:
+  - { expr: "p.running == false", inputs: { p.running: { value: false } }, expect: { value: true } }
+  - { expr: "p.running == false", inputs: { p.running: { value: true } }, expect: { value: false } }
+  - name: a non-GOOD input never suppresses
+    requirement: REQ-EXP-008
+    expr: "p.running == false"
+    inputs: { p.running: { value: false, quality: BAD } }
+    expect: { value: false }
+
+# Device-type expansion: parameters in, substituted text or number out.
+expansion:
+  - { template: "modbus://{plc}/holding/{base + 0x10}", params: { plc: plc-01, base: 0x0100 }, expect: "modbus://plc-01/holding/272" }
+  - { template: "{rated_current * 1.5}", params: { rated_current: 12.0 }, expect: 18.0 }
+  - { template: "{instance}.current / {rated_current} * 100", params: { instance: pump_03, rated_current: 18.0 }, expect: "pump_03.current / 18.0 * 100" }
+  - name: a non-integer address is rejected
+    requirement: REQ-EXP-004
+    template: "modbus://{plc}/holding/{base + 0.5}"
+    params: { plc: plc-01, base: 256 }
+    expect_error: true
