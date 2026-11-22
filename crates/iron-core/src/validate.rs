@@ -531,6 +531,17 @@ impl Validator<'_> {
                 }
             }
             let get = |name: &str| a.value.get(name);
+            if ty.is_some() && !is_bool && !LEVELS.contains(&a.key.as_str()) {
+                self.error(
+                    diag::ALARM_NAME,
+                    file,
+                    &path,
+                    a.key_span,
+                    "an alarm on a numeric tag must be named low_low, low, high, or high_high",
+                    "The name gives the direction: high alarms fire at or above the limit, low alarms at or below it.",
+                );
+                continue;
+            }
             match (get("limit"), get("state")) {
                 (Some(l), None) if !is_bool => match l.as_f64() {
                     Some(limit) => {

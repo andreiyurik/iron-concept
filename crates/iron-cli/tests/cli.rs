@@ -67,3 +67,18 @@ fn environment_and_usage_errors_exit_two() {
     assert_eq!(iron(&[]).0, 2);
     assert_eq!(iron(&["version"]).0, 0);
 }
+
+#[test]
+fn simulation_scenarios_run_and_report() {
+    let (code, out, _) = iron(&["test", "--sim", &greenhouse()]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains("✅ frost_night") && out.contains("1 passed"),
+        "{out}"
+    );
+    let (_, json, _) = iron(&["test", "--sim", &greenhouse(), "--json"]);
+    let doc: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert_eq!(doc["status"], "ok");
+    assert_eq!(doc["scenarios"][0]["name"], "frost_night");
+    assert_eq!(iron(&["test", &greenhouse()]).0, 2);
+}

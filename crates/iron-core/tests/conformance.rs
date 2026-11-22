@@ -2,7 +2,7 @@
 //! validator.
 //!
 //! Covers: REQ-TAG-002..007, REQ-RWS-002, REQ-DRV-009, REQ-EXP-001..003,
-//! REQ-EXP-005, REQ-CFG-005, REQ-ALM-001.
+//! REQ-EXP-005, REQ-CFG-005, REQ-ALM-001, REQ-ALM-004.
 
 use iron_core::{validate, Files, Severity};
 use std::collections::BTreeSet;
@@ -26,8 +26,8 @@ fn validate_vectors() {
     let root = root.unwrap();
     let cases = root.get("cases").unwrap().items().unwrap();
     assert!(
-        cases.len() >= 15,
-        "expected at least 15 cases, found {}",
+        cases.len() >= 16,
+        "expected at least 16 cases, found {}",
         cases.len()
     );
     for case in cases {

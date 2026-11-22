@@ -5,7 +5,7 @@
 > inline. This page exists so a requirement can be found by identifier
 > and so a test can name what it proves.
 
-116 requirements. Test levels are defined in
+121 requirements. Test levels are defined in
 [specs/testing.md](specs/testing.md); `ci` is a static check, `review`
 is not automatically testable.
 
@@ -17,6 +17,11 @@ is not automatically testable.
 | `REQ-ALM-001` | unit | [alarm-engine](specs/alarm-engine.md) | An IRON alarm MUST NOT trigger a command. No `action:` field exists in alarm configuration, deliberately. |
 | `REQ-ALM-002` | unit | [alarm-engine](specs/alarm-engine.md) | **Shelving.** An operator may shelve a nuisance alarm for a bounded time (e.g. 8h max). Shelving is audited, visible in a "shelved" list, and expir… |
 | `REQ-ALM-003` | unit | [alarm-engine](specs/alarm-engine.md) | Notification channels are pluggable (Telegram first, then email/SMS/webhook). Channel failures are logged and retried; a notification failure MUST… |
+| `REQ-ALM-004` | unit | [alarm-engine](specs/alarm-engine.md) | On a numeric tag an alarm MUST be named `low_low`, `low`, `high`, or `high_high`; the name gives the direction. On a `bool` tag the name is free an… |
+| `REQ-ALM-005` | unit | [alarm-engine](specs/alarm-engine.md) | A `high` or `high_high` alarm MUST become active when the value is at or above its limit; a `low` or `low_low` alarm when the value is at or below… |
+| `REQ-ALM-006` | unit | [alarm-engine](specs/alarm-engine.md) | An active alarm MUST clear only when the value has moved back past the limit by the alarm's `deadband`: at or below `limit − deadband` for a high a… |
+| `REQ-ALM-007` | unit | [alarm-engine](specs/alarm-engine.md) | With `on_delay`, the condition MUST hold continuously for that long before the alarm becomes active; with `off_delay`, the clear condition likewise… |
+| `REQ-ALM-008` | unit | [alarm-engine](specs/alarm-engine.md) | A sample with quality `BAD` MUST NOT change an alarm's state in either direction, and it cancels a delay in progress: an unreadable sensor is neith… |
 | `REQ-CFG-001` | integration | [config-lifecycle](specs/config-lifecycle.md) | An apply MUST NOT lose buffered samples or alarm events. |
 | `REQ-CFG-002` | integration | [config-lifecycle](specs/config-lifecycle.md) | **`iron deploy` MUST refuse** to deploy onto a target holding adjustments that the commit being deployed does not contain, and MUST name them. The… |
 | `REQ-CFG-003` | integration | [config-lifecycle](specs/config-lifecycle.md) | **Alarm state survives an apply.** An alarm whose definition did not change MUST keep its state (active, acknowledged, shelved). A deploy must not… |

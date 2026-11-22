@@ -1,0 +1,83 @@
+# Alarm detection. Each step is a sample (or `poll: true` for the passage of
+# time alone); `active` is the detector's state after it. `t` is seconds.
+# Quality defaults to GOOD. Spec: docs/specs/alarm-engine.md.
+cases:
+  - name: the limit itself is in alarm, and clears without a deadband
+    requirement: REQ-ALM-005
+    alarm: { name: high, limit: 180 }
+    steps:
+      - { t: 0, value: 179.9, active: false }
+      - { t: 1, value: 180.0, active: true }
+      - { t: 2, value: 180.0, active: true }
+      - { t: 3, value: 179.99, active: false }
+
+  - name: a low alarm mirrors a high one
+    requirement: REQ-ALM-005
+    alarm: { name: low_low, limit: 5 }
+    steps:
+      - { t: 0, value: 5.1, active: false }
+      - { t: 1, value: 5.0, active: true }
+      - { t: 2, value: 5.01, active: false }
+
+  - name: hysteresis — clears at limit minus deadband, not before
+    requirement: REQ-ALM-006
+    alarm: { name: high, limit: 180, deadband: 1.0 }
+    steps:
+      - { t: 0, value: 181, active: true }
+      - { t: 1, value: 179.99, active: true }
+      - { t: 2, value: 179.01, active: true }
+      - { t: 3, value: 179.0, active: false }
+      - { t: 4, value: 179.5, active: false }
+
+  - name: hysteresis on a low alarm
+    requirement: REQ-ALM-006
+    alarm: { name: low, limit: 8, deadband: 0.5 }
+    steps:
+      - { t: 0, value: 7.9, active: true }
+      - { t: 1, value: 8.4, active: true }
+      - { t: 2, value: 8.5, active: false }
+
+  - name: on_delay — the condition must hold, and a lapse starts over
+    requirement: REQ-ALM-007
+    alarm: { name: high, limit: 180, on_delay: 3 }
+    steps:
+      - { t: 0, value: 185, active: false }
+      - { t: 2, value: 185, active: false }
+      - { t: 2.5, value: 170, active: false }
+      - { t: 3, value: 185, active: false }
+      - { t: 5.9, poll: true, active: false }
+      - { t: 6, poll: true, active: true, transition_at: 6 }
+
+  - name: off_delay
+    requirement: REQ-ALM-007
+    alarm: { name: high, limit: 180, off_delay: 2 }
+    steps:
+      - { t: 0, value: 185, active: true }
+      - { t: 1, value: 170, active: true }
+      - { t: 2.9, poll: true, active: true }
+      - { t: 4, poll: true, active: false, transition_at: 3 }
+
+  - name: a BAD sample neither raises nor clears
+    requirement: REQ-ALM-008
+    alarm: { name: high, limit: 180 }
+    steps:
+      - { t: 0, value: 999, quality: BAD, active: false }
+      - { t: 1, value: 185, active: true }
+      - { t: 2, value: 0, quality: BAD, active: true }
+      - { t: 3, value: 185, quality: UNCERTAIN, active: true }
+      - { t: 4, value: 100, quality: UNCERTAIN, active: false }
+
+  - name: a BAD sample cancels a delay in progress
+    requirement: REQ-ALM-008
+    alarm: { name: high, limit: 180, on_delay: 3 }
+    steps:
+      - { t: 0, value: 185, active: false }
+      - { t: 1, value: 185, quality: BAD, active: false }
+      - { t: 5, poll: true, active: false }
+
+  - name: a discrete alarm fires on its state
+    alarm: { name: trip, state: false }
+    steps:
+      - { t: 0, value: true, active: false }
+      - { t: 1, value: false, active: true }
+      - { t: 2, value: true, active: false }
