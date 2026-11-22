@@ -22,6 +22,14 @@ levels; only the last one touches hardware.
 The TDD workflow these levels support is described in
 [guides/tdd.md](../guides/tdd.md).
 
+Two things tie the levels to the specs. Every requirement carries an
+identifier and the level that proves it ([requirements index](../requirements.md)),
+and a test names the identifiers it covers. And the language-neutral
+[conformance vectors](../../conformance/README.md) — diagnostics, expression
+results, register decoding, publish decisions, command acceptance — run as
+part of Level 1; they are the cases an implementation is written against.
+The gates that enforce both are in [operations.md](operations.md).
+
 ## Level 1 — Unit tests
 
 Pure logic, no external dependencies. What gets tested and why it matters:
@@ -68,9 +76,12 @@ fn viewer_role_cannot_send_any_command() {
 }
 ```
 
-The same `iron-domain` crate is tested once and reused by edge, server, and
-WASM modules — the alarm state machine and deadband tests above run in every
-target. UI components are tested without a browser engine via Vitest +
+The same `iron-domain` crate is tested once and reused by edge, server,
+validator, and simulator — the alarm state machine and deadband tests above
+run in every target. The expression evaluator
+([expressions.md](expressions.md)) is tested here too, and it is the part
+that gets property tests and fuzzing: no input may panic, loop, or yield a
+non-finite value, and quality must always be the worst of the inputs. UI components are tested without a browser engine via Vitest +
 Testing Library: mount the component, feed it a tag update, assert on DOM:
 
 ```ts
@@ -104,7 +115,7 @@ async fn signal_flows_from_edge_to_browser_full_chain() {
     let stack = TestStack::up().await;            // NATS + TimescaleDB + iron-edge (sim)
     let mut ws = stack.websocket("/dashboard/reactor_01").await;
     stack.simulator.set_tag("reactor_01.temperature", raw(14.4), Quality::Good);
-    // 14.4mA on 4–20mA / 0–200°C → 130.0°C
+    // the tag declares scaling raw [4, 20] → engineering [0, 200]: 14.4mA → 130.0°C
     let frame = ws.next_update("reactor_01.temperature").await;
     assert_eq!(frame.value, 130.0);
     assert_eq!(frame.quality, Quality::Good);
@@ -128,9 +139,27 @@ far unnecessary — with their trigger in
 [business/deferred.md](../business/deferred.md).
 
 Other required integration scenarios: network loss → SQLite buffer → replay
-with no historian gap; alarm ACTIVE at edge → escalation notification →
-acknowledgment propagates to all connected clients; command lifecycle
-ISSUED→CONFIRMED including feedback timeout → FAILED.
+with no historian gap, with live samples not delayed by the replay; alarm
+ACTIVE at edge → escalation notification → acknowledgment propagates to all
+connected clients; command lifecycle ISSUED→CONFIRMED including feedback
+timeout → FAILED.
+
+Two groups exist to pin down contracts rather than features:
+
+- **Both bindings, both engines.** The transport contract tests
+  ([transport.md](transport.md)) run against the in-process binding and
+  against NATS; the storage contract tests ([historian.md](historian.md))
+  run against SQLite and against TimescaleDB. A behavior that differs
+  between them is a bug.
+- **Commands that must not execute.** A command issued while the edge is
+  offline never executes after reconnect; a duplicate id executes once; an
+  expired TTL, a clock offset beyond the TTL, and a config-hash mismatch are
+  each rejected with a named reason ([command-path.md](command-path.md)).
+
+And one that guards the central guarantee: a CI check on the crate
+dependency graph fails if any READ-path crate depends on the Command Service
+or the driver write API
+([read-write-separation.md](read-write-separation.md)).
 
 ## Level 3 — Simulation scenarios
 

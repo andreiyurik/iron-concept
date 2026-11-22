@@ -28,7 +28,7 @@ Where IRON differs by design, not by claim of superiority:
 |---|---|---|
 | License | Proprietary, ~$10k+ per server, modules priced separately | Apache 2.0, $0 |
 | Core workflow | Designer GUI first; files underneath | CLI and plain text first; GUI on top |
-| Scripting | Jython 2.7 embedded throughout | Plugins in any language (separate processes, scoped credentials), YAML for config |
+| Scripting | Jython 2.7 embedded throughout — far more expressive than anything IRON offers in-process | One small expression language for computed values (no loops, no state); plugins in any language (separate processes, scoped credentials) for everything else |
 | Edge | Java gateway (Edge product) | Single Rust binary, SQLite buffer |
 | Architecture | Monolithic gateway | Separated edge/broker/server, READ/WRITE split |
 | Commissioning | Not addressed | [`iron field`](../specs/field-verification.md) |
@@ -101,7 +101,7 @@ Kubernetes, UMH is a serious, more mature option today.
 The difference is the audience and the unit of complexity:
 
 - UMH: Helm charts, k3s, Kafka, microservices — built for enterprise IT teams.
-- IRON: one CLI, two containers, a $150 mini-PC — built for the automation
+- IRON: one CLI, one binary, a $150 mini-PC — built for the automation
   engineer and the 5-person integrator who will never run Kubernetes.
 
 UMH validates IRON's architecture thesis (broker-centric UNS + TimescaleDB).

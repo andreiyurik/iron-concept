@@ -75,7 +75,18 @@ The vertical slice, deliberately narrow:
   — the project is built with agents from day one, so the agent surface
   ships first, but small; the first AI-parity measurement is the Phase 2
   entry criterion
-- Modbus TCP only (diagslave/real PLC), deadband + quality on the edge
+- Modbus TCP only (diagslave/real PLC), deadband + quality on the edge,
+  with the addressing, block reads, and per-connection supervision of
+  [protocol-drivers.md](../specs/protocol-drivers.md)
+- The expression evaluator in `iron-domain` and derived tags
+  ([expressions.md](../specs/expressions.md)) — small, and the first thing a
+  real site asks for after its first dashboard
+- The contracts that are expensive to retrofit, even with one binding each:
+  transport ([transport.md](../specs/transport.md)), storage
+  ([historian.md](../specs/historian.md)), the command envelope
+  ([command-path.md](../specs/command-path.md)), the effective-config model
+  and config hash ([config-lifecycle.md](../specs/config-lifecycle.md)), and
+  the CI check on the crate graph that backs the READ/WRITE guarantee
 - One threshold alarm → Telegram notification
 - Runs on a Raspberry Pi 4; deploys via Kamal to any Linux box
 - `iron validate` for the implemented subset
@@ -109,7 +120,10 @@ worth more than 10,000 stars — it surfaces what no simulation reveals and
 becomes the reference case that shortens every later sale.
 
 - OPC-UA client (S7-1200/1500, Beckhoff)
-- Historian trends (continuous aggregates), alarm ack + escalation, basic RBAC
+- Historian trends (rollups), alarm ack + escalation, basic RBAC
+- Runtime adjustments of alarm tuning, `iron diff --pull`
+  ([config-lifecycle.md](../specs/config-lifecycle.md)) — the first night
+  on a real plant is when this is needed
 - Self-hosted installation guide: under 30 minutes on commodity hardware
 - Plant mode — NATS + TimescaleDB + Kamal for the first site that outgrows
   one box, with in-place history migration from the single-binary default

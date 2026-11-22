@@ -13,9 +13,10 @@ pressure. IRON is the pressure.
 dashboard.** One open-source Rust binary on a $150 box — no Windows, no
 vendor IDE, no per-tag meter. Unlimited tags, forever, Apache 2.0.
 
-**And one guarantee no vendor designs for: a dashboard bug cannot command
-a machine.** READ and WRITE are separate paths with separate credentials —
-architecture, not code review. Specs are YAML in Git, validated
+**And one guarantee no vendor designs for: nothing writes to a machine
+except one audited gate, and only to targets you declared in a file.** A
+display, a trend, an alarm, a formula cannot cause a write — by
+construction, checked in CI, not by code review. Specs are YAML in Git, validated
 deterministically: built for AI agents, with no AI inside.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -46,7 +47,7 @@ workshops** — without six-figure licenses, per-tag pricing, Windows-only
 runtimes, or a vendor between you and your own plant.
 
 > 📐 **Where the project stands:** IRON is in its architecture phase — this
-> repository is a complete engineering blueprint (16 normative specs, 11
+> repository is an engineering blueprint (21 normative specs with 109 numbered requirements, 13
 > decision records, honest competitive analysis), published openly *before*
 > the code, the way serious infrastructure gets built. The prototype
 > (`iron new` → Modbus TCP → live dashboard) is the current milestone.
@@ -76,7 +77,11 @@ Modbus·OPC-UA·S7   Rust edge agent   unified namespace      Rust · Svelte UI 
                    local alarms                             audited command path · MCP
 ```
 
-**How one tag makes the round trip** — and why a dashboard can never command a
+That is plant mode. The default is the same roles in **one process** — an
+in-process channel instead of NATS, SQLite instead of TimescaleDB, the same
+configuration files ([deployment](docs/specs/deployment.md)).
+
+**How one tag makes the round trip** — and why a display can never command a
 machine by accident:
 
 ![How IRON works: READ path and WRITE path](docs/assets/data-flow.svg)
@@ -90,13 +95,13 @@ long-term exploration drawn dashed:
 
 | | |
 |---|---|
-| 🔒 **READ/WRITE separation as architecture** | A dashboard bug *cannot* command a machine — separate code paths, separate broker permissions, separate network rules. [spec →](docs/specs/read-write-separation.md) |
+| 🔒 **READ/WRITE separation as architecture** | Only the Command Service can write, only to targets declared in `config/commands/`, only after auth and a journal entry. Enforced in code in every deployment; plant mode adds separate broker permissions and network rules. The spec also says what this does *not* stop. [spec →](docs/specs/read-write-separation.md) |
 | 🛰️ **Intelligence at the edge** | The Rust agent filters, buffers, and evaluates alarms next to the PLC — and keeps working when the network dies. [spec →](docs/specs/edge-agent.md) |
-| 📋 **Specs, not click-marathons** | Tags, alarms, dashboards — plain YAML in Git. Reviewable, diffable, AI-generatable, deterministically validated. [spec →](docs/vision/spec-driven.md) |
+| 📋 **Specs, not click-marathons** | Tags, alarms, dashboards — plain YAML in Git. Reviewable, diffable, AI-generatable, deterministically validated. Computed values are one-line formulas in [one small expression language](docs/specs/expressions.md), not scripts. [spec →](docs/vision/spec-driven.md) |
 | 🤖 **Built for agents — no AI inside** | Every CLI command is also an MCP tool over the same core; validator errors are written as fix prompts; context packs per plant area. The product never calls a model, and a model is never on the WRITE path. [spec →](docs/specs/agent-interface.md) |
 | 🧪 **Simulation-first** | Build and test a full plant screen with zero hardware. The simulator is the same binary, not a toy. [spec →](docs/specs/testing.md) |
 | ✅ **Commissioning as a product** | `iron field` turns signal checkout — today's Excel-and-paper ritual — into a guided, audited, Git-versioned workflow. **No other platform has this.** [spec →](docs/specs/field-verification.md) |
-| 📉 **Drift detection** | `iron diff` proves the plant runs exactly what Git says. Remote fleet maintenance for integrators. [spec →](docs/specs/cli.md) |
+| 📉 **Drift detection** | `iron diff` shows whether the plant runs what Git says — and when someone tuned an alarm on site at night, who, why, and how to pull it back into Git. Remote fleet maintenance for integrators. [spec →](docs/specs/config-lifecycle.md) |
 | 🏷️ **Unlimited tags, forever** | Apache 2.0. A 40-sensor greenhouse and a 100,000-tag refinery pay the same: nothing. [ADR →](docs/decisions/0005-apache-2-license.md) |
 
 ## How IRON compares
@@ -129,15 +134,17 @@ bet is architecture and ownership, not out-maturing a thirty-year platform.
 | Layer | Technology | Why |
 |---|---|---|
 | Edge agent | **Rust** | Memory safety next to PLCs, no GC pauses, single binary, ARM64/x86 — [ADR 0001](docs/decisions/0001-rust-for-edge.md) |
-| Server | **Rust** (same workspace) | One runtime language; `iron-domain` logic written once for edge, server, WASM modules; one `iron` binary = CLI + server + simulator + MCP — [ADR 0009](docs/decisions/0009-rust-for-the-server.md) |
+| Server | **Rust** (same workspace) | One runtime language; `iron-domain` logic written once for edge, server, validator, simulator; one `iron` binary = CLI + server + simulator + MCP — [ADR 0009](docs/decisions/0009-rust-for-the-server.md) |
 | Browser UI | **Svelte 5 + TypeScript** | Runes map onto tags, SVG mimics are native, small bundle embedded in the binary — [ADR 0010](docs/decisions/0010-svelte-for-the-ui.md) |
 | Agent surface | **MCP with CLI parity** | Same core, same schemas, same diagnostics; no LLM in the runtime — [ADR 0011](docs/decisions/0011-ai-native-surface.md) |
-| Message bus | **NATS JetStream** | 15MB binary, subject-level auth, replay, unified namespace — [ADR 0003](docs/decisions/0003-nats-jetstream.md) |
-| Historian | **TimescaleDB** | It's PostgreSQL — full SQL, compression, continuous aggregates, one backup — [ADR 0004](docs/decisions/0004-timescaledb.md) |
+| Message bus (plant mode) | **NATS JetStream** | One binding of a [bus-independent contract](docs/specs/transport.md); 15MB binary, subject-level auth, replay, unified namespace — [ADR 0003](docs/decisions/0003-nats-jetstream.md) |
+| Historian | **SQLite** by default, **TimescaleDB** in plant mode | One storage contract, two engines. TimescaleDB is PostgreSQL — full SQL, compression, continuous aggregates, one backup — [ADR 0004](docs/decisions/0004-timescaledb.md) |
 | Deployment | **Kamal 2** | One command, health-gated, air-gap friendly, no Kubernetes required — [ADR 0006](docs/decisions/0006-kamal-for-deployment.md) |
 
 Runs on a Raspberry Pi, a $150 fanless mini-PC, or your existing servers.
-High availability = two cheap boxes + Patroni, not one expensive box.
+A server failure does not stop the plant or lose data — control stays in the
+PLCs and each edge buffers; a second cheap box is a standby. Automatic
+failover is [not designed yet](docs/specs/deployment.md).
 [Hardware guide →](docs/guides/hardware.md)
 
 ## Works with your PLCs — three positions on the control layer
@@ -189,13 +196,18 @@ docs/
 ├── START-HERE.md        routes: farmer · engineer · developer · LLM
 ├── glossary.md          shared vocabulary, one definition per term
 ├── vision/              why — problem, beliefs, personas, honest comparison
-├── specs/               what — 16 normative, testable specifications
-├── decisions/           why this tech — 11 ADRs with trade-offs
+├── requirements.md      every MUST, numbered, with the test level that proves it (generated)
+├── specs/               what — 21 normative, testable specifications
+├── decisions/           why — 13 ADRs with trade-offs
 ├── business/            model · economics · roadmap · deferred
 └── guides/              hardware selection · TDD practice
 
-examples/greenhouse/     a complete site in the target format — 14 tags,
-                         1 command, 1 scenario; the first validator fixture
+conformance/             language-neutral test vectors: inputs and the exact
+                         outputs an implementation must produce
+
+examples/greenhouse/     a complete site in the target format — 15 tags
+                         (one derived), 1 command, 1 scenario; the first
+                         validator fixture
 ```
 
 ## 🤝 Contributing

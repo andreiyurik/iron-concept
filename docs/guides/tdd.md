@@ -23,10 +23,12 @@ RED — write a test describing desired behavior. GREEN — minimum code to pass
 REFACTOR — clean up under the test's protection. What changes in this domain
 is the *content* of "desired behavior":
 
-- 14.4mA on a 4–20mA / 0–200°C input produces exactly 130.0°C
+- 14.4mA on an input scaled 4–20mA → 0–200°C produces exactly 130.0°C
 - deadband 0.5 suppresses 87.3 → 87.4, passes 87.3 → 87.9
 - the HIGH alarm triggers at 180.0, not 179.9
-- a tag silent for 3 scan cycles becomes UNCERTAIN
+- a tag that misses 1 scan becomes UNCERTAIN; after 3 it is BAD
+- a float32 in two registers decodes correctly in all four byte orders
+- a derived tag with one BAD input is BAD, whatever the formula says
 
 These are precise, testable, and consequential. A wrong conversion misleads an
 operator; a wrong limit misses a real event. TDD forces "correct" to be

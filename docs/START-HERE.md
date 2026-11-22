@@ -45,6 +45,7 @@ pattern does not — telemetry streams, commands knock on one audited door
 | Rails | IRON | The difference |
 |---|---|---|
 | Model | Tag (`config/tags/`) | the single source of truth — plus quality, time, and history |
+| Model method | Derived tag (`derived:` expression) | a formula, not code: pure, total, type-checked by the validator |
 | View | Dashboards, mimics, widgets | declarative bindings; a widget never computes plant values |
 | Controller action | Command (`config/commands/`) | named, authorized, journaled — and the *only* write path |
 | ActiveRecord | Tag engine + historian | live state + time series, not CRUD |
@@ -60,7 +61,10 @@ not requirements. Frontmatter on every file declares `status`
 (`spec` is normative; everything else is not). Capability claims marked
 "target" describe intent, not existing software. When generating IRON
 configuration, the contract is: output must pass `iron validate`
-([cli.md](specs/cli.md)).
+([cli.md](specs/cli.md)). When implementing IRON itself, the contract is the
+numbered requirements ([requirements.md](requirements.md)), the
+[conformance vectors](../conformance/README.md), and the gates in
+[specs/operations.md](specs/operations.md).
 
 ## Map of the knowledge base
 
@@ -68,6 +72,7 @@ configuration, the contract is: output must pass `iron validate`
 docs/
   START-HERE.md            ← you are here
   glossary.md              ← shared vocabulary (read me early)
+  requirements.md          ← every MUST by identifier, with its test level (generated)
 
   vision/                  ← WHY — narrative, for humans
     problem.md             what's broken in industrial software
@@ -77,11 +82,15 @@ docs/
     honest-comparison.md   vs Siemens, Rockwell, AVEVA, Schneider, Ignition, UMH, Node-RED
 
   specs/                   ← WHAT — normative, testable
-    architecture.md        two layers, broker, scaling targets
-    tag-model.md           the core abstraction
+    architecture.md        two layers, transport, scaling targets
+    tag-model.md           the core abstraction: signals, scaling, derived tags
+    expressions.md         the one expression language
     device-types.md        templates + IO-list import
-    read-write-separation.md   the sacred constraint
+    read-write-separation.md   the guarantee, stated so it can be tested
     edge-agent.md          deadband, quality, buffer, autonomy
+    protocol-drivers.md    connections, Modbus addressing, polling, supervision
+    transport.md           what edge and server say to each other; two bindings
+    config-lifecycle.md    Git → running → back to Git; adjustments, drift
     alarm-engine.md        ISA-18.2 lifecycle; alarms never act
     command-path.md        the only way IRON writes to the world
     security.md            zones, broker authz, what IRON does not claim
@@ -93,10 +102,13 @@ docs/
     deployment.md          lite / dev / local / cloud / edge
     extensions.md          plugins in any language (separate processes) — WASM modules later
     agent-interface.md     CLI/MCP parity, context packs, diagnostics, no LLM in runtime
+    operations.md          observability, format version, backup, engineering gates
     plc-runtime.md         long-term exploration (clearly gated)
 
-  decisions/               ← WHY THIS TECH — one ADR per choice (0009–0011: Rust server, Svelte, AI-native surface)
+  decisions/               ← WHY — one ADR per choice (0009–0013: Rust server, Svelte, AI-native surface,
+                             one expression language, bounded runtime adjustments)
   ../examples/greenhouse/  ← a complete example site in the target format
+  ../conformance/          ← test vectors: inputs and required outputs
   business/                ← model, economics, roadmap, deferred (ideas with triggers)
   guides/                  ← hardware selection, TDD practice
 ```

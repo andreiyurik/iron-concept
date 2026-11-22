@@ -1,7 +1,7 @@
 ---
 status: draft
 type: spec
-depends-on: [read-write-separation, edge-agent, tag-model]
+depends-on: [read-write-separation, edge-agent, tag-model, transport]
 ---
 
 # System Architecture
@@ -25,10 +25,10 @@ IRON has a two-layer architecture with a clear boundary between runtime and inte
 │  • First-level alarm evaluation (local, autonomous)              │
 │  • Data quality: GOOD / UNCERTAIN / BAD                         │
 │  • Local SQLite buffer — survives network loss                   │
-│  • WASM modules — custom logic without recompiling the agent     │
+│  • Derived tags — expressions over the tags it owns              │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │ NATS JetStream
-                            │ subject: plant.line1.reactor1.temperature
+                            │ transport contract (in-process · NATS JetStream)
+                            │ tag address: line_1.reactor_01.temperature
 ┌───────────────────────────▼─────────────────────────────────────┐
 │  iron-server  (Rust)                                             │
 │                                                                  │
@@ -54,7 +54,7 @@ contains the CLI, the server, the simulator, and the MCP server
 ```mermaid
 graph TD
     subgraph iron-edge ["iron-edge (Rust · Edge)"]
-        EDGE["Edge Agent\nModbus · OPC-UA · S7 · MQTT\nDeadband · Buffer · Local alarms · WASM"]
+        EDGE["Edge Agent\nModbus · OPC-UA · S7 · MQTT\nDeadband · Buffer · Local alarms · Derived tags"]
     end
 
     subgraph iron-server ["iron-server (Rust · Server)"]
@@ -86,17 +86,24 @@ graph TD
 
 ## Communication layer
 
-NATS JetStream is the internal message bus between iron-edge and iron-server.
-The rationale for choosing NATS is in [decisions/0003-nats-jetstream.md](../decisions/0003-nats-jetstream.md).
+What the edge and the server say to each other — message kinds, delivery
+guarantees, the session handshake — is one contract, specified in
+[transport.md](transport.md), with two bindings:
 
-- Subject hierarchy mirrors physical topology: `plant.line_1.reactor_01.temperature`
-- Wildcard subscriptions: `plant.line_1.>` gives you all of line 1
-- Replay on reconnect — a restarted iron-server instance catches up from the stream
-- Data subjects and command subjects live in **separate authorization scopes** —
+- **In-process channels** in the default single-binary deployment.
+- **NATS JetStream** in plant mode, when edge and server are separate hosts
+  ([decisions/0003-nats-jetstream.md](../decisions/0003-nats-jetstream.md)).
+
+Properties of the contract that shape everything else:
+
+- Every tag has exactly one canonical address, its dotted path
+  (`line_1.reactor_01.temperature`) — the Unified Namespace concept. In the
+  NATS binding it maps to the subject `data.<site>.line_1.reactor_01.temperature`,
+  and `data.<site>.line_1.>` is all of line 1.
+- Data is at-least-once and replayable; a restarted server catches up.
+- Commands are at-most-once and never stored.
+- Data and commands live in **separate authorization scopes** —
   see [read-write-separation.md](read-write-separation.md) and [security.md](security.md)
-
-NATS subjects implement the Unified Namespace concept: every tag has exactly one
-canonical address in the system.
 
 ## Scaling design
 
@@ -154,7 +161,7 @@ Firewall rule: OT → IT allowed (edge agent initiates connection to NATS)
 
 The edge agent initiates the TCP connection to NATS (OT → IT).
 Over this established connection, data flows both ways:
-  READ:  agent publishes sensor data to data subjects
+  READ:  agent publishes samples and alarm events for the areas it owns
   WRITE: agent subscribes to its own command subjects, receives authorized commands
 ```
 

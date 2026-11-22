@@ -49,12 +49,35 @@ agent (or a human) editing it, these are the rules everything else follows.
   alarms never act; an LLM is never on the WRITE path.
 - No LLM runs inside IRON — the product exposes an agent interface
   (`docs/specs/agent-interface.md`), it never embeds a model.
-- Config is text in Git; the manifest is derived, never hand-written.
+- Config is text in Git; the manifest is derived, never hand-written. The
+  only sanctioned runtime change is a bounded, journaled adjustment
+  (`docs/specs/config-lifecycle.md`) — never widen that set in passing.
+- One expression language (`docs/specs/expressions.md`). No spec may
+  introduce a second mini-language, and no expression context may exist on
+  the WRITE path.
+- Edge and server talk through one contract (`docs/specs/transport.md`);
+  specs describe the contract, never a broker's behavior. Commands are
+  at-most-once and never stored.
+- No implicit scaling: a value is converted only by an explicit `scaling`.
+
+## Requirements and conformance
+
+- A normative statement uses the word MUST, and every MUST carries an
+  identifier and a test level inline (`REQ-CMD-003 integration`). Assign
+  them with `python3 scripts/requirements.py`; never renumber or reuse one.
+  `docs/requirements.md` is generated — do not edit it.
+- `conformance/` holds the test vectors the implementation is written
+  against. A spec change that alters behavior changes the vectors in the
+  same commit.
+- When code exists: a change that implements a requirement adds a test
+  naming its identifier; third-party APIs are checked against the pinned
+  version's documentation, not recalled (`docs/specs/operations.md`).
 
 ## Before committing
 
 ```bash
-python3 scripts/lint-docs.py   # links · English-only · frontmatter · honesty
+python3 scripts/requirements.py   # assign ids to new MUSTs, regenerate the index
+python3 scripts/lint-docs.py      # links · English-only · frontmatter · honesty · requirements
 ```
 
 Diagrams are hand-authored SVG in `docs/assets/`; preview with

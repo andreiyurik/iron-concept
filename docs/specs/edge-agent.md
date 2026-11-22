@@ -1,7 +1,7 @@
 ---
 status: draft
 type: spec
-depends-on: [tag-model, alarm-engine, read-write-separation]
+depends-on: [tag-model, alarm-engine, read-write-separation, protocol-drivers, transport]
 ---
 
 # Edge Agent (iron-edge)
@@ -15,13 +15,20 @@ preference: [decisions/0001-rust-for-edge.md](../decisions/0001-rust-for-edge.md
 
 ## Responsibilities
 
-1. Poll field devices according to `config/tags/` (protocol drivers)
+1. Poll field devices according to `config/tags/` — connections, addressing,
+   poll grouping, and per-device supervision are specified in
+   [protocol-drivers.md](protocol-drivers.md)
 2. Convert raw values to engineering units, assign quality and timestamp
-3. Filter by deadband, publish to NATS data subjects
-4. **Evaluate first-level alarms locally** (see below)
-5. Buffer everything when the network is down; replay when it returns
-6. Execute authorized commands received on its command subjects
-7. Serve a local read-only fallback page for operators
+3. Evaluate the derived tags whose inputs it owns ([tag-model.md](tag-model.md))
+4. Filter by deadband, send samples to the server ([transport.md](transport.md))
+5. **Evaluate first-level alarms locally** (see below)
+6. Buffer everything when the network is down; replay when it returns
+7. Execute authorized commands addressed to it
+8. Serve a local read-only fallback page for operators
+
+The agent runs as its own process next to the PLC in plant mode, and as a
+role inside the single `iron` process in the default deployment
+([deployment.md](deployment.md)). Everything below holds in both.
 
 ## Deadband filtering
 
@@ -31,15 +38,15 @@ Digital tags publish only on change.
 
 Normative behavior:
 
-- The agent MUST publish when `|current − last_published| >= deadband`.
-- The agent MUST publish on any quality change, regardless of deadband.
+- The agent MUST publish when `|current − last_published| >= deadband`. `REQ-EDG-001 unit`
+- The agent MUST publish on any quality change, regardless of deadband. `REQ-EDG-002 unit`
 - The agent MUST publish when the value crosses any alarm limit defined for
   the tag, regardless of deadband. A value creeping from 179.8 to 180.2 in
   0.3-steps with deadband 0.5 still crosses the HIGH limit at 180.0 — the
-  crossing publishes immediately. **Deadband must never delay or mask an alarm.**
+  crossing publishes immediately. **Deadband must never delay or mask an alarm.** `REQ-EDG-003 unit`
 - The agent MUST publish a heartbeat sample at a configurable maximum interval
   (default 60s) even when nothing changed, so downstream consumers can
-  distinguish "stable value" from "dead link".
+  distinguish "stable value" from "dead link". `REQ-EDG-004 unit`
 
 ```rust
 // The filter knows about quality and alarm limits — not just the delta
@@ -72,14 +79,15 @@ The agent — not the server — evaluates alarm limits, because the agent is th
 component guaranteed to be alive next to the process:
 
 - The agent MUST evaluate every alarm limit defined in `config/tags/` on every
-  scan, before deadband filtering.
-- Alarm state transitions (ACTIVE / RTN) MUST be published as discrete alarm
-  events on dedicated subjects (`data.<site>.<area>.alarms.>`), buffered with
-  the same durability as samples.
+  scan, before deadband filtering. `REQ-EDG-005 unit`
+- Alarm state transitions (ACTIVE / RTN) MUST be sent as discrete alarm
+  events — a message kind of their own, not a field on a sample
+  ([transport.md](transport.md)) — buffered with the same durability as
+  samples. `REQ-EDG-006 unit`
 - During a network outage the agent MUST continue evaluating alarms and MUST
   be able to deliver critical notifications through a configurable local
   channel (GSM modem, local relay/sounder output, SMTP on the OT network) —
-  so a plant that loses its server does not lose its alarms.
+  so a plant that loses its server does not lose its alarms. `REQ-EDG-007 unit`
 
 What the agent does **not** do: acknowledgment, escalation, shelving,
 notification routing — that is server-side aggregation. The split is specified
@@ -92,12 +100,15 @@ When the network goes down, the agent writes samples and alarm events to a
 local SQLite buffer. When the network returns, it replays in order.
 
 - Replayed samples carry their original acquisition timestamps; the historian
-  MUST accept out-of-order inserts ([historian.md](historian.md)).
+  MUST accept out-of-order inserts ([historian.md](historian.md)). `REQ-EDG-008 unit`
 - Buffer size is bounded by disk watermark; on overflow the agent drops the
   oldest *samples* first and alarm events last, and records a gap marker so
   the historian shows a documented gap instead of silently missing data.
-- NATS JetStream gives at-least-once delivery, so duplicates are possible.
-  Sample identity is `(tag, timestamp)`; consumers MUST deduplicate on it.
+- Delivery is at-least-once, so duplicates are possible. Sample identity is
+  `(tag, timestamp)`; consumers MUST deduplicate on it. `REQ-EDG-009 unit`
+- A message leaves the buffer only when the transport has acknowledged it,
+  and replaying a backlog MUST NOT delay current samples or alarm events
+  ([transport.md](transport.md)). `REQ-EDG-010 unit`
 
 ## Autonomous operation
 
@@ -116,29 +127,37 @@ The factory floor keeps working when the server is unreachable:
 
 ## Command execution
 
-The agent subscribes to its own command subjects only (see
-[read-write-separation.md](read-write-separation.md)). For each received
-command it MUST:
+The command executor is a distinct module that alone holds the drivers'
+write handles and accepts input only from the Command Service
+([read-write-separation.md](read-write-separation.md)). For each received
+command it MUST: `REQ-EDG-011 unit`
 
-1. Validate the command against `config/commands/` (unknown command → reject + NACK)
-2. Execute the protocol write
-3. Read back the target where the protocol allows, and publish an ACK/NACK
-   result event with the observed value
+1. Reject a duplicate `id`, an expired TTL, or a `config_hash` that differs
+   from its own
+2. Validate the command against its own `config/commands/` (unknown command
+   → reject)
+3. Execute the protocol write, ahead of pending reads on that connection
+4. Read back the target where the protocol allows, and send a result with
+   the observed value
 
-The full command lifecycle is specified in [command-path.md](command-path.md).
+The envelope, the delivery rules, and the full lifecycle are specified in
+[command-path.md](command-path.md).
 
-## WASM modules
+## Extending the agent
 
-Custom logic — unit conversions, derived tags, custom protocol framing — can be
-deployed as WASM modules without recompiling the agent. Modules run sandboxed:
-they receive samples and return samples, with no I/O capabilities of their own.
-Manifest format, capability rules, and the full extension surface (server-side
-modules, plugins): [extensions.md](extensions.md).
+Simple computed values are derived tags and need no code
+([tag-model.md](tag-model.md)). Custom protocol drivers and heavier logic
+are plugins — separate programs with their own credentials
+([extensions.md](extensions.md)). In-process WASM modules on the edge are
+*deferred* ([business/deferred.md](../business/deferred.md)).
 
 ## Time
 
 - The agent assigns timestamps at acquisition, in UTC.
+- The agent maintains an estimate of its clock offset from the server over
+  the transport session; command TTLs are checked against it
+  ([transport.md](transport.md)).
 - The agent SHOULD sync via NTP; on hardware with no reliable clock it MUST
-  mark samples so the historian can flag suspect timestamps.
+  mark samples so the historian can flag suspect timestamps. `REQ-EDG-012 unit`
 - Where the protocol provides device timestamps (OPC-UA), both device and
   agent timestamps are preserved.

@@ -1,7 +1,7 @@
 ---
 status: draft
 type: spec
-depends-on: [tag-model, device-types, testing, deployment]
+depends-on: [tag-model, device-types, testing, deployment, config-lifecycle]
 ---
 
 # The `iron` CLI
@@ -28,9 +28,18 @@ Six you reach for less often:
 iron generate   derive artifacts from specs: tests · scenarios · dashboard · object · from-io-list
 iron explain    answer "where does this go and why" (--effective · --area · --manifest)
 iron console    a live REPL against a running site (READ; WRITE only through the Command Path)
-iron server     run the server process — what a container or a Pi runs (--role all|ui|core)
+iron server     run the IRON process — what a container or a Pi runs (--role all|edge|server)
 iron agent      the agent surface: mcp (serve over stdio) · skill (print the skill file)
 iron version    versions across all targets
+```
+
+And three for maintaining an installation, specified in
+[operations.md](operations.md):
+
+```
+iron backup     snapshot a running site's data directory
+iron restore    restore a snapshot onto a fresh install
+iron upgrade    migrate project files to a newer configuration format
 ```
 
 That is the whole surface. `iron` is one binary — CLI, server, simulator, and
@@ -57,7 +66,7 @@ The five-minute path, stated falsifiably:
 00:00  iron new greenhouse --template greenhouse && cd greenhouse
 00:10  iron dev
 00:20  open http://localhost:4000
-       → 12 tags, live trend chart, one simulated alarm with ack button
+       → 15 tags, live trend chart, one simulated alarm with ack button
 05:00  a working monitoring system, no PLC, no Docker, no Windows, no license key
 ```
 
@@ -84,7 +93,7 @@ myplant/
     types/           # device types
     dashboards/      # widget layouts
     mimics/          # SVG mnemonics
-    connections.yaml # host aliases
+    connections.yaml # host aliases and protocol parameters (optional)
     deploy.yml       # Kamal targets (used only when you deploy)
   test/
     sim/scenarios/
@@ -139,11 +148,14 @@ iron validate
 #     hint: alarm limits MUST lie inside range — raise range or lower the limit  [IRON-E042]
 ```
 
-Checks: source URI syntax, alarm limit ordering and range containment, type
-constraints, command references, mimic/dashboard tag bindings
-(`--mimics`), device-type expansion. Reachability problems are warnings when
-the target is expected offline (`--offline`). Diagnostic format:
-[agent-interface.md](agent-interface.md).
+Checks: source URI syntax and protocol addressing
+([protocol-drivers.md](protocol-drivers.md)), alarm limit ordering and range
+containment, type constraints, expression typing and reference resolution
+with no cycles among derived tags ([expressions.md](expressions.md)),
+command references, mimic/dashboard tag bindings (`--mimics`), device-type
+expansion, area ownership across edge targets. Reachability problems are
+warnings when the target is expected offline (`--offline`). Diagnostic
+format: [agent-interface.md](agent-interface.md).
 
 This is the contract that makes AI-generated configuration safe:
 nothing reaches the plant floor without passing a deterministic validator.
@@ -190,16 +202,24 @@ Drift detection — the guarantee that Git is not lying about the plant:
 
 ```bash
 iron diff --target edge-01
-# Comparing git HEAD config ↔ running config on edge-01
+# Comparing git HEAD config ↔ effective config on edge-01 (deployed from 50b1a46)
 # ✅ 46 tags identical
-# ❌ reactor_01.temperature.deadband: git=0.5, running=0.2
-#    deployed 2026-05-02 14:11 by arman@plant.kz (not committed)
+# ⚠️  reactor_01.temperature.alarms.high.limit: git=180, running=178
+#    adjusted 2026-05-02 03:11 by arman@plant.kz — "trips late on fast ramps"
+iron diff --target edge-01 --pull     # write adjustments into the spec files for review
 ```
 
-- Every deploy stamps the running config with its Git SHA.
+- Every deploy records the Git commit and the config hash on the target.
 - `iron diff` MUST detect any divergence between the committed spec and the
-  effective running config on every target.
+  effective running config on every target, and MUST distinguish the two
+  kinds: journaled **adjustments** (attributed, expected) and unexplained
+  drift (an error). `REQ-CLI-001 integration`
+- `--pull` writes adjustments back into the working tree; it never commits.
 - CI SHOULD run `iron diff` against production nightly and alarm on drift.
+
+What an adjustment is, which fields allow one, and why `iron deploy` refuses
+to overwrite adjustments it does not contain:
+[config-lifecycle.md](config-lifecycle.md).
 
 For an integrator maintaining eleven plants remotely, this single command
 replaces "I hope nobody touched it since March".
@@ -232,7 +252,9 @@ manifest ([agent-interface.md](agent-interface.md)), not prose.
 ```bash
 iron explain reactor_01.temperature
 # source      modbus://plc-01/holding/0x1000  scan 1s  deadband 0.5 (type default 0.2 overridden)
-# alarms      high 180 (p2) · high_high 195 (p1)
+# owned by    edge-01 (area reactor_01)
+# alarms      high 178 (p2, adjusted from 180) · high_high 195 (p1)
+# feeds       reactor_01.delta_t (derived, evaluated on edge-01)
 # shown on    dashboards/reactor_01.yaml (gauge, trend) · mimics/reactor.svg
 # consumed by plugin vibration-ml
 # historian   raw 30d → 1m aggregates 2y
@@ -260,9 +282,16 @@ and the command path decides ([command-path.md](command-path.md)).
 
 ## iron server
 
-What a container, a Pi, or a systemd unit runs. `--role all` (default) is
-the single-binary site; `--role ui` / `--role core` exist for the deferred
-split deployment ([deferred.md](../business/deferred.md)).
+What a container, a Pi, or a systemd unit runs. One binary, three roles:
+
+| Role | Runs |
+|---|---|
+| `all` (default) | Everything in one process — the single-binary site |
+| `edge` | Polling, derived tags, first-level alarms, buffer, command executor, fallback page |
+| `server` | Tag engine, historian, alarm management, Command Service, UI, API |
+
+Splitting `server` further into `ui` and `core` for a DMZ is *deferred*
+([deferred.md](../business/deferred.md)).
 
 ## iron agent
 

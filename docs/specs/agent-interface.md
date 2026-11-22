@@ -73,7 +73,8 @@ whatever — is fixing the problem. One format everywhere: CLI, MCP, the
                 "line": 23, "col": 13, "end_line": 23, "end_col": 16 },
   "message": "alarm high_high (220) exceeds range maximum (200)",
   "hint": "Either raise range to [0, 250] if the sensor supports it, or lower the limit. Alarm limits MUST lie inside range.",
-  "docs": "specs/alarm-engine.md#limits"
+  "requirement": "REQ-TAG-003",
+  "docs": "specs/tag-model.md"
 }
 ```
 
@@ -85,9 +86,12 @@ Normative rules:
   about it. The format is LSP-compatible by design: a future `iron lsp`
   ([deferred.md](../business/deferred.md)) maps it onto editor diagnostics
   without changing it. Agents get MCP; humans get the editor; both wrap the
-  same core.
+  same core. `REQ-AGT-001 integration`
 - Codes are stable across releases; a code is never reused for a different
-  condition. `docs` links to the normative sentence the rule comes from.
+  condition. `requirement` names the requirement the diagnostic enforces
+  ([requirements index](../requirements.md)) and `docs` links to its spec;
+  the [conformance vectors](../../conformance/README.md) match diagnostics
+  on severity, path, and requirement.
 - Diagnostics are written to be pasted, unchanged, into an agent's context as
   the next instruction. Validator output is the fix prompt.
 - `iron validate --explain IRON-E042` prints the rule, the rationale, and an
@@ -115,7 +119,7 @@ Normative rules:
 - A context pack is derived from the plant manifest; it is never
   hand-maintained.
 - A pack MUST NOT include internals of neighbouring areas. Cross-area
-  references appear as names only.
+  references appear as names only. `REQ-AGT-002 integration`
 - `--format json|markdown`; Markdown is the default because it is what agents
   read best and humans can read at all.
 - A size budget with hierarchical splitting is *deferred* until a real site
@@ -163,17 +167,23 @@ Normative rules:
   tag and command; for a command: who may issue it, the feedback tag, the
   timeout, the journal location. Output is the manifest subgraph, not prose —
   prose is `--human`.
-- Fact is the running configuration stamped on every target by `iron deploy`;
-  `iron diff` compares it to the manifest at Git HEAD ([cli.md](cli.md)).
+- For every tag the manifest records what the configuration implies but
+  does not state: the area and the edge that owns it, and — for a derived
+  tag — its inputs and whether the edge or the server evaluates it
+  ([tag-model.md](tag-model.md)).
+- Fact is the *effective* configuration on a target: the commit it was
+  deployed from plus any journaled adjustments
+  ([config-lifecycle.md](config-lifecycle.md)). `iron diff` compares it to
+  the manifest at Git HEAD ([cli.md](cli.md)).
 
 ## No LLM in the runtime
 
 - IRON MUST NOT call, embed, bundle, or depend on a language model. Agents run
-  in the user's tooling — any IDE, any provider, or none.
+  in the user's tooling — any IDE, any provider, or none. `REQ-AGT-003 integration`
 - Model-generated content reaches the plant only through `iron validate`.
   There is no "AI mode" that relaxes a check.
 - An LLM is never on the WRITE path. No agent surface submits commands,
-  acknowledges alarms, or authorizes field steps; the Command Service and
+  acknowledges alarms, makes adjustments, or authorizes field steps; the Command Service and
   `iron field` have no machine-facing entry point that skips a human.
 - Third parties may build an assistant as a plugin or an external tool
   over this interface ([extensions.md](extensions.md)). IRON does not ship one.

@@ -55,7 +55,7 @@
   <text x="778" y="133" text-anchor="middle" font-size="11" font-weight="600" fill="#4fc3f7">iron test --sim</text>
   <text x="778" y="148" text-anchor="middle" font-size="9" fill="#aaa">SIL / HIL testing</text>
 
-  <text x="450" y="200" text-anchor="middle" font-size="10" fill="#888">YAML specs · one «iron» binary = CLI + server + simulator + MCP · device types and WASM plugins as "gems"</text>
+  <text x="450" y="200" text-anchor="middle" font-size="10" fill="#888">YAML specs · one «iron» binary = CLI + server + simulator + MCP · device types and plugins as "gems"</text>
 
   <!-- LAYER 4: HMI / Visualization -->
   <rect x="30" y="225" width="840" height="145" rx="12" fill="url(#layer4)" filter="url(#shadow)" opacity="0.95"/>
@@ -114,7 +114,7 @@
   <text x="790" y="452" text-anchor="middle" font-size="9" fill="#ccc">ISA-88 · batch control</text>
   <text x="790" y="466" text-anchor="middle" font-size="8" font-weight="700" fill="#e0a060" letter-spacing="0.5">◇ FUTURE SCOPE</text>
 
-  <text x="450" y="535" text-anchor="middle" font-size="10" fill="#ddd">iron-domain shared with edge and WASM modules · in-memory tag state · MCP server · Command Service as a separate crate</text>
+  <text x="450" y="535" text-anchor="middle" font-size="10" fill="#ddd">iron-domain shared with edge and simulator · in-memory tag state · MCP server · Command Service as a separate crate</text>
 
   <!-- LAYER 2: Edge Gateway -->
   <rect x="30" y="560" width="840" height="145" rx="12" fill="url(#layer2)" filter="url(#shadow)" opacity="0.95"/>

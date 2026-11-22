@@ -1,7 +1,7 @@
 ---
 status: draft
 type: spec
-depends-on: [read-write-separation, command-path]
+depends-on: [read-write-separation, command-path, transport]
 ---
 
 # Security Architecture
@@ -20,14 +20,20 @@ If either answer is yes, the design is wrong.
 
 ## Structural security: READ/WRITE separation
 
-The primary security property is structural, not cryptographic — and it is
-enforced at three layers:
+The primary security property is structural, not cryptographic. Which
+layers enforce it depends on the deployment, and this table says so plainly:
 
-| Layer | Enforcement |
-|---|---|
-| Code | Separate processes, separate config trees, one Command Service entry point |
-| Transport | Disjoint NATS subject namespaces with per-identity authorization |
-| Network | OT/IT VLAN segmentation, OT→IT connection initiation only |
+| Layer | Enforcement | Default (one process) | Plant mode |
+|---|---|:--:|:--:|
+| Code | Write handles held only by the command executor; READ-path crates cannot depend on the Command Service (checked in CI); read-only WebSocket; separate config trees | ✅ | ✅ |
+| Transport | Disjoint subject roots with per-identity authorization | — | ✅ |
+| Network | OT/IT VLAN segmentation, OT→IT connection initiation only | — | ✅ |
+| Hosts | Outward-facing role holds no command credentials (*deferred*) | — | optional |
+
+The default deployment relies on the code layer alone. That is a real
+boundary — it removes whole classes of bugs — but it is one process: an
+attacker who gains code execution in it has everything. Sites that need
+more than that need plant mode.
 
 Full specification: [read-write-separation.md](read-write-separation.md).
 
@@ -36,13 +42,22 @@ Full specification: [read-write-separation.md](read-write-separation.md).
 The broker carries both data and command subjects, so broker authorization is
 a security boundary, not a configuration detail:
 
-- Every connecting identity (each edge agent, iron-server, Command Service) has
-  its own credentials (NKeys / mTLS client certs), individually revocable.
-- Edge agent `edge-line1`: publish `data.plant.line1.>` only; subscribe
-  `cmd.plant.line1.>` only. It cannot read other areas' commands or forge
-  other areas' data.
-- Command Service: the only identity with publish rights on `cmd.>`.
-- Dashboards/historian identities: subscribe `data.>`, no publish rights at all.
+- Every connecting identity (each edge agent, iron-server, Command Service,
+  each plugin) has its own credentials (NKeys / mTLS client certs),
+  individually revocable.
+- Subject roots and what travels on each are defined in
+  [transport.md](transport.md). Permissions per identity, for a site `plant`
+  and an edge `edge-line1` owning the area `line1`:
+
+| Identity | May publish | May subscribe |
+|---|---|---|
+| Edge `edge-line1` | `data.plant.line1.>` · `alarm.plant.line1.>` · `result.plant.line1.>` · `edge.plant.edge-line1.>` | `cmd.plant.line1.>` |
+| Command Service | `cmd.>` — the only identity that can | `result.>` |
+| Server READ path (tag engine, historian, alarms) | derived-tag results on `data.>` · `alarm.>` for server-detected alarms | `data.>` · `alarm.>` · `edge.>` · `result.>` |
+| Plugin | the data subjects its declaration names | the data subjects its declaration names |
+
+- An edge cannot read another area's commands or forge another area's data.
+- No stream may capture `cmd.>`: commands are never stored by the broker.
 - All connections over TLS. Plants with elevated requirements MAY run a
   physically separate broker for `cmd.>` — the architecture does not assume
   shared transport, it merely permits it.
@@ -104,7 +119,7 @@ credentials that can publish on `cmd.>`. A compromise of the `ui` role then
 yields read access to plant data — serious, and exactly the incident the
 READ/WRITE separation is designed to bound — but no ability to write to a
 machine. Citadel egress: the `core` role never initiates connections toward
-the DMZ.
+the DMZ. `REQ-SEC-001 integration`
 
 ## Authentication and authorization
 

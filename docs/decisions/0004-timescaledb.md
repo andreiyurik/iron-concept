@@ -37,7 +37,9 @@ database.
 
 ## Trade-offs
 
-Single-node Postgres ceilings apply (HA via Patroni, not horizontal sharding)
+Single-node Postgres ceilings apply (replication and failover, not horizontal
+sharding; automatic failover needs a three-voter quorum and is not designed
+yet — [specs/deployment.md](../specs/deployment.md))
 — sufficient for 100k-tag plants, honest limit for "all sites in one DB"
 enterprise scenarios, which the multi-site tier addresses differently.
 The Timescale license (TSL for some features) needs tracking in packaging.

@@ -32,8 +32,10 @@ normatively in
 [specs/extensions.md](../specs/extensions.md):
 
 1. **WASM modules** — sandboxed, language-agnostic in-process extensions (write in Rust,
-   Go, Python, JS, …) running inside iron-edge and iron-server: derived tags,
-   conversions, alarm enrichment, notification channels.
+   Go, Python, JS, …) running inside iron-edge and iron-server: stateful
+   calculations, conversions, alarm enrichment, notification channels.
+   (Simple derived tags no longer need any extension: they are expressions —
+   [ADR 0012](0012-one-expression-language.md).)
 2. **Plugin processes over NATS** — out-of-process integrations in any
    language, holding their own scoped credentials: custom protocol drivers,
    analytics, ML inference.

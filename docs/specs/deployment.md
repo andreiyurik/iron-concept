@@ -1,7 +1,7 @@
 ---
 status: draft
 type: spec
-depends-on: [architecture, cli, security]
+depends-on: [architecture, cli, security, transport, config-lifecycle]
 ---
 
 # Deployment
@@ -36,16 +36,23 @@ What changes when a site moves to plant mode — and what deliberately does not:
 
 | | default (one binary) | plant |
 |---|---|---|
-| Transport | In-process channel | NATS JetStream |
-| Storage | SQLite (same logical schema) | TimescaleDB |
-| Processes | edge + server + UI in one process | edge on OT hosts, server on the LAN, separate containers |
+| Transport binding | In-process channel | NATS JetStream |
+| Storage engine | SQLite | TimescaleDB |
+| Processes | `iron server --role all`: edge + server + UI in one process | `--role edge` on OT hosts, `--role server` on the LAN |
 | Tag specs, commands, alarms, UI, CLI | **identical** | **identical** |
-| Scope ceiling | ~2,000 tags, one host, no HA | plant scale, HA |
+| Scope ceiling (target, unmeasured) | ~2,000 tags, one host | plant scale, several hosts |
+
+Transport and storage are **independent choices** behind two contracts —
+[transport.md](transport.md) and the storage contract in
+[historian.md](historian.md). "Default" and "plant" are the two conventional
+combinations, not the only legal ones: a site with one remote edge may run
+NATS and keep SQLite. The first remote edge does not force a database
+migration.
 
 Normative rules:
 
 - The configuration format is byte-identical between modes. `iron validate`
-  output for a project MUST NOT depend on the mode.
+  output for a project MUST NOT depend on the mode. `REQ-DEP-001 integration`
 - `iron deploy --target plant` from a single-binary site migrates in place:
   same YAML, history exported into TimescaleDB, nothing relearned. The
   default is a starting point, never a trap.
@@ -65,8 +72,9 @@ Normative rules:
 Docker, no Windows-vs-Linux difference, no services. This is the five-minute
 path and it is the acceptance test of every release.
 
-`iron dev --plant` starts the generated Compose stack (`iron_server`,
-`iron_edge` with `SIMULATE: true`, `timescaledb`, `nats -js`) for developers
+`iron dev --plant` starts the generated Compose stack (`iron server --role
+server`, `iron server --role edge` with simulated sources, `timescaledb`,
+`nats -js`) for developers
 who need to exercise the plant topology locally. It is the exception, not
 the entry point.
 
@@ -81,7 +89,7 @@ the entry point.
 ## Plant — LAN server with NATS and TimescaleDB
 
 Deploy to any Linux machine on the plant network when a site outgrows one
-box: more than one host, more than ~2,000 tags, or HA.
+box: more than one host, or more than ~2,000 tags.
 
 ```yaml
 # config/deploy.yml
@@ -119,9 +127,11 @@ Deploy contract:
   failed health check aborts the deploy with the old version untouched.
 - Database migrations run before the new container starts and MUST be
   backwards-compatible with the running version; `iron deploy` refuses
-  migrations not flagged as such.
-- Every deploy stamps the running config with its Git SHA — this is what
-  `iron diff` checks against ([cli.md](cli.md)).
+  migrations not flagged as such. `REQ-DEP-002 integration`
+- Every deploy records the Git commit and the config hash on the target —
+  this is what `iron diff` checks against. How configuration is applied,
+  what survives an apply, and why a deploy refuses to overwrite un-pulled
+  adjustments are specified in [config-lifecycle.md](config-lifecycle.md).
 
 ### Split roles (deferred)
 
@@ -130,20 +140,34 @@ command credentials and `--role core` in the protected zone — a stronger form
 of the contour rule in [security.md](security.md). Deferred, with its
 trigger, in [business/deferred.md](../business/deferred.md).
 
-### High availability
+### When the server dies
 
-Two cheap servers beat one expensive one:
+> **Status: not designed yet.** IRON has no high-availability specification.
+> What follows is what the architecture already gives a site, and what it
+> does not.
 
-```yaml
-servers:
-  web: ["192.168.1.100", "192.168.1.101"]
-accessories:
-  db:
-    hosts: ["192.168.1.100", "192.168.1.101"]   # Patroni: PostgreSQL failover < 10s
-```
+What a single-server site has today, by design:
 
-Two Beelink EQ12 units ≈ $300 total. That is the honest answer to "what if the
-server dies".
+- **The plant keeps running.** Control lives in the PLCs; IRON is
+  supervisory.
+- **Nothing is lost.** Each edge buffers and replays
+  ([edge-agent.md](edge-agent.md)), keeps detecting alarms, keeps its local
+  notification channel, and serves its read-only fallback page.
+- **Recovery is a restore.** Configuration is in Git and the server is
+  designed to be killed and restarted ([ADR 0009](../decisions/0009-rust-for-the-server.md)).
+  A second cheap box kept as a **cold or warm standby** — same binary,
+  database replicated or restored from backup, switched over by a person —
+  is the honest v1 answer, and at roughly $150 it is an affordable one.
+
+What that does not give: automatic failover. Doing it correctly needs more
+than two machines — PostgreSQL failover managers such as Patroni require a
+consensus store with a quorum, so the minimum is **three** voters (the third
+can be a small witness node), and two nodes alone cannot tell a dead peer
+from a broken link. It also needs answers IRON has not written down: which
+server is the single active Command Service, and how alarm state and the
+command journal move with it. Automatic failover is *deferred* with its
+trigger in [business/deferred.md](../business/deferred.md) and will get its
+own spec rather than a paragraph here.
 
 ## Cloud (optional)
 
@@ -152,7 +176,7 @@ dashboards, multi-site management, or integrator-managed service. A cloud
 instance can run as a read-only view against the plant's NATS/TimescaleDB —
 it stores nothing.
 
-Reference: Hetzner AX41 (€38/mo) or two for HA (€76/mo).
+Reference: Hetzner AX41 (€38/mo).
 
 ## Edge — the edge role in the OT zone
 
@@ -160,14 +184,20 @@ Reference: Hetzner AX41 (€38/mo) or two for HA (€76/mo).
 servers:
   edge:
     hosts: ["192.168.10.5"]          # device in the OT/IT boundary
-    cmd: /app/bin/iron_edge
+    cmd: iron server --role edge
     options: { network: host }       # direct OT network access
+    areas: [line_1]                  # the areas this edge owns
     env:
       clear:
+        IRON_EDGE_ID: edge-01
         NATS_URL: nats://192.168.1.100:4222
-        TAGS_CONFIG: /app/config/tags.yaml
-        BUFFER_PATH: /var/iron/buffer.db
+        IRON_CONFIG: /app/config
+        IRON_BUFFER_PATH: /var/iron/buffer.db
 ```
+
+Every area is owned by exactly one edge ([transport.md](transport.md)); the
+edge polls the tags of its areas and executes their commands, and its broker
+credentials are scoped to them ([security.md](security.md)).
 
 ```bash
 iron deploy --target edge-01
@@ -188,32 +218,42 @@ Many OT networks have no internet. The procedure is `docker save` → USB/SCP �
 
 ```bash
 # machine with internet:
-docker pull ghcr.io/getiron/iron-edge:0.3.0 --platform linux/arm64
-docker save ghcr.io/getiron/iron-edge:0.3.0 | gzip > iron-edge-arm64.tar.gz
+docker pull ghcr.io/getiron/iron:0.3.0 --platform linux/arm64
+docker save ghcr.io/getiron/iron:0.3.0 | gzip > iron-arm64.tar.gz
 # transfer, then on the device:
-docker load < iron-edge-arm64.tar.gz
+docker load < iron-arm64.tar.gz
 ```
+
+There is one image, because there is one binary; the role is chosen by the
+command line.
 
 ## Environment variables
 
-### iron-server
+`iron dev` needs none of these. Setting `NATS_URL` selects the NATS transport
+binding; setting `DATABASE_URL` selects TimescaleDB. Unset, the process uses
+in-process transport and SQLite.
+
+### Roles `all` and `server`
 
 | Variable | Required | Description |
 |---|---|---|
-| `IRON_SECRET_KEY` | ✅ | Session/token signing secret (`iron secret generate`) |
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `NATS_URL` | ✅ | NATS server |
-| `IRON_HOST` | ✅ | Hostname for cookie security |
+| `IRON_SECRET_KEY` | when serving beyond localhost | Session/token signing secret (`iron secret generate`) |
+| `IRON_HOST` | when serving beyond localhost | Hostname for cookie security |
+| `DATABASE_URL` | plant mode | PostgreSQL connection string; unset = SQLite in `IRON_DATA_DIR` |
+| `NATS_URL` | plant mode | NATS server; unset = in-process transport |
+| `IRON_CONFIG` | — | Path to the `config/` directory (default `./config`) |
+| `IRON_DATA_DIR` | — | SQLite database, journal, buffer (default `/var/iron`) |
 | `IRON_TELEGRAM_TOKEN` | — | Alarm notification bot |
 | `IRON_ADMIN_EMAIL` | — | Initial admin account on first boot |
 
-### iron-edge
+### Role `edge`
 
 | Variable | Required | Description |
 |---|---|---|
-| `NATS_URL` | ✅ | NATS server to publish to |
-| `TAGS_CONFIG` | ✅ | Path to tag specs |
-| `BUFFER_PATH` | — | SQLite buffer (default `/var/iron/buffer.db`) |
+| `IRON_EDGE_ID` | ✅ | This edge's identity; must match a target in `deploy.yml` |
+| `NATS_URL` | ✅ | NATS server to connect to |
+| `IRON_CONFIG` | — | Path to the `config/` directory (default `./config`) |
+| `IRON_BUFFER_PATH` | — | SQLite buffer (default `/var/iron/buffer.db`) |
 | `LOG_LEVEL` | — | `debug`/`info`/`warn`/`error` |
 
 ## Troubleshooting
@@ -221,7 +261,6 @@ docker load < iron-edge-arm64.tar.gz
 ```bash
 kamal app logs --since 10m                      # container won't start
 kamal accessory logs db --since 30m             # database issues
-kamal app exec --host 192.168.10.5 "bin/iron_edge nats ping"     # OT→IT firewall, port 4222?
-kamal app exec --host 192.168.10.5 "bin/iron_edge modbus ping 192.168.10.100"  # PLC reachable?
+kamal app exec --host 192.168.10.5 "iron validate"     # source reachability from the edge: PLC answering? firewall?
 kamal proxy logs                                # SSL: DNS pointing here? port 80 open?
 ```
