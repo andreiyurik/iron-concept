@@ -91,7 +91,7 @@ command on an authorized subject, originated by the Command Service.
 The same principle, applied one level up. Anything that faces operators,
 office networks, or the internet is exposed by design; the Command Service
 is what must stay inside. In the default single-process deployment the two
-are separated by code and broker authorization; the *deferred* split-roles
+are separated by code alone; the *deferred* split-roles
 deployment ([business/deferred.md](../business/deferred.md)) separates them
 by hosts:
 
@@ -114,8 +114,10 @@ by hosts:
 └────────────────────────────────────────────┘
 ```
 
-Rule: a host that is reachable from outside the protected zone MUST NOT hold
-credentials that can publish on `cmd.>`. A compromise of the `ui` role then
+Rule, for a split-roles deployment: a host that is reachable from outside
+the protected zone MUST NOT hold credentials that can publish on `cmd.>`.
+(The default deployment is one host and cannot satisfy this; that is the
+limit stated in the table above.) A compromise of the `ui` role then
 yields read access to plant data — serious, and exactly the incident the
 READ/WRITE separation is designed to bound — but no ability to write to a
 machine. Citadel egress: the `core` role never initiates connections toward

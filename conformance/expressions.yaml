@@ -54,6 +54,14 @@ expansion:
   - { template: "modbus://{plc}/holding/{base + 0x10}", params: { plc: plc-01, base: 0x0100 }, expect: "modbus://plc-01/holding/272" }
   - { template: "{rated_current * 1.5}", params: { rated_current: 12.0 }, expect: 18.0 }
   - { template: "{instance}.current / {rated_current} * 100", params: { instance: pump_03, rated_current: 18.0 }, expect: "pump_03.current / 18.0 * 100" }
+  - name: a small coefficient is written without an exponent
+    template: "x.y * {k}"
+    params: { k: 0.00001 }
+    expect: "x.y * 0.00001"
+  - name: a negative value keeps the expression valid
+    template: "x.y * -{k}"
+    params: { k: -5 }
+    expect: "x.y * -(-5)"
   - name: a non-integer address is rejected
     requirement: REQ-EXP-004
     template: "modbus://{plc}/holding/{base + 0.5}"

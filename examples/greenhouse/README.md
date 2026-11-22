@@ -1,9 +1,9 @@
 # Example: Greenhouse
 
 A complete, realistic IRON project for a two-zone greenhouse — the kind of
-site the `greenhouse` template of `iron new` will scaffold. **Status: these
-files demonstrate the target configuration format defined in the specs; no
-software exists yet to run them.** They exist so that:
+site the `greenhouse` template of `iron new` will scaffold. **Status:
+`iron validate` accepts this project and `iron test --sim` runs its scenario;
+nothing can run it against real devices yet.** The files exist so that:
 
 - the spec formats ([tag-model](../../docs/specs/tag-model.md),
   [command-path](../../docs/specs/command-path.md),
@@ -11,7 +11,7 @@ software exists yet to run them.** They exist so that:
   not just described;
 - an automation engineer can review concrete tags and tell us what the
   greenhouse knows that we don't ([CONTRIBUTING](../../CONTRIBUTING.md));
-- the future `iron validate` has its first fixture: **every file here MUST
+- `iron validate` has its first fixture: **every file here MUST
   pass validation, forever** — this example goes red in CI the moment a spec
   change breaks it.
 

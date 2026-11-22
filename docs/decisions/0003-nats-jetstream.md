@@ -15,7 +15,7 @@ operable by a 5-person integrator — not a platform team.
 
 NATS JetStream: single ~15MB binary with no dependencies, ~30MB RAM at rest,
 at-least-once delivery with replay, subject hierarchy that mirrors plant
-topology (`data.<site>.line_1.reactor_01.temperature`) with wildcard
+topology (`data.<site>.reactor_01.temperature`) with wildcard
 subscriptions, and per-identity subject-level authorization — which is what
 makes the READ/WRITE transport separation enforceable
 ([specs/read-write-separation.md](../specs/read-write-separation.md)).

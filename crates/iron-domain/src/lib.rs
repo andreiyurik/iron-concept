@@ -45,6 +45,17 @@ pub enum TagType {
 }
 
 impl TagType {
+    pub const NAMES: &str = "bool, int16, int32, uint16, uint32, float32, or float64";
+
+    #[must_use]
+    pub fn expr_type(self) -> expr::Type {
+        if self == TagType::Bool {
+            expr::Type::Bool
+        } else {
+            expr::Type::Number
+        }
+    }
+
     #[must_use]
     pub fn parse(s: &str) -> Option<TagType> {
         Some(match s {

@@ -8,4 +8,4 @@ pub mod validate;
 pub mod yaml;
 
 pub use diag::{Diagnostic, Report, Severity};
-pub use validate::{validate, Files};
+pub use validate::{check, validate, Checked, Files};

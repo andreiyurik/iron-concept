@@ -45,9 +45,9 @@ Detection lives at the edge because the edge is the component guaranteed to be
 alive next to the process. Management lives at the server because it needs
 humans, history, and routing.
 
-One exception, stated rather than hidden: an alarm on a derived tag whose
-inputs span several edges is detected by the server, because no single edge
-sees all the inputs ([tag-model.md](tag-model.md)). Such an alarm does not
+One exception, stated rather than hidden: an alarm on a tag that no single
+edge owns — a derived tag whose inputs span several edges, or a tag
+published by a plugin — is detected by the server, because no edge sees it ([tag-model.md](tag-model.md)). Such an alarm does not
 survive loss of the server, and `iron validate` warns when it is priority 1.
 
 ## Alarm state machine (ISA-18.2)

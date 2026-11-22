@@ -1,5 +1,6 @@
 # Alarm detection. Each step is a sample (or `poll: true` for the passage of
-# time alone); `active` is the detector's state after it. `t` is seconds.
+# time alone); `active` is the detector's state after it;
+# `transitions`, when given, lists the times of the transitions the step produced. `t` is seconds.
 # Quality defaults to GOOD. Spec: docs/specs/alarm-engine.md.
 cases:
   - name: the limit itself is in alarm, and clears without a deadband
@@ -46,7 +47,14 @@ cases:
       - { t: 2.5, value: 170, active: false }
       - { t: 3, value: 185, active: false }
       - { t: 5.9, poll: true, active: false }
-      - { t: 6, poll: true, active: true, transition_at: 6 }
+      - { t: 6, poll: true, active: true, transitions: [6] }
+
+  - name: a delay that ran out is honoured even if the next sample ends the condition
+    requirement: REQ-ALM-007
+    alarm: { name: high, limit: 180, on_delay: 3 }
+    steps:
+      - { t: 0, value: 185, active: false }
+      - { t: 10, value: 170, active: false, transitions: [3, 10] }
 
   - name: off_delay
     requirement: REQ-ALM-007
@@ -55,7 +63,7 @@ cases:
       - { t: 0, value: 185, active: true }
       - { t: 1, value: 170, active: true }
       - { t: 2.9, poll: true, active: true }
-      - { t: 4, poll: true, active: false, transition_at: 3 }
+      - { t: 4, poll: true, active: false, transitions: [3] }
 
   - name: a BAD sample neither raises nor clears
     requirement: REQ-ALM-008

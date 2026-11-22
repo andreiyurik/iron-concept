@@ -8,7 +8,7 @@ type: decision
 ## Context
 
 `iron-core` could read configuration but nothing specified how
-configuration is *changed* by a program. Yet three v1 features already
+configuration is *changed* by a program. Yet three planned commands already
 write spec files: `iron diff --pull`, `iron generate from-io-list`, and
 `iron upgrade`. Each would have grown its own way of producing YAML.
 
@@ -51,8 +51,8 @@ they will have nothing to invent when they are.
 - **A different format** (TOML, JSON, a custom DSL) — rejected for now.
   YAML is what the audience has seen and what language models write well;
   the subset removes the dangerous parts.
-- **Defer until the first form is built** — rejected. `--pull` needs it in
-  v1 anyway, and retrofitting "all edits go through the core" after three
+- **Defer until the first form is built** — rejected. the IO-list import needs it
+  in the first slice anyway, and retrofitting "all edits go through the core" after three
   commands have written files their own way is the expensive order.
 
 ## Trade-offs

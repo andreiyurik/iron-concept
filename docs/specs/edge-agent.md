@@ -33,7 +33,8 @@ role inside the single `iron` process in the default deployment
 ## Deadband filtering
 
 A temperature sitting at 87.3°C ± 0.05°C generates no traffic at
-deadband = 0.5°C. For typical analog tags, 80–90% of polls produce no publish.
+deadband = 0.5°C. For typical analog tags most polls should produce no publish — 80–90% is the
+design expectation, not a measurement.
 Digital tags publish only on change.
 
 Normative behavior:

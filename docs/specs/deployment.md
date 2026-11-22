@@ -192,7 +192,7 @@ servers:
     hosts: ["192.168.10.5"]          # device in the OT/IT boundary
     cmd: iron server --role edge
     options: { network: host }       # direct OT network access
-    areas: [line_1]                  # the areas this edge owns
+    areas: [reactor_01]                  # the areas this edge owns
     env:
       clear:
         IRON_EDGE_ID: edge-01
@@ -207,11 +207,12 @@ credentials are scoped to them ([security.md](security.md)).
 
 ```bash
 iron deploy --target edge-01
-# multi-arch image (ARM64 handled automatically) · restart ~4s
+# multi-arch image (ARM64 handled automatically) · restart in seconds (target)
 # SQLite buffer preserved across restarts — no data loss
 ```
 
-For harsh environments, an alternative packaging is an immutable firmware
+For harsh environments, an alternative packaging — *deferred*
+([business/deferred.md](../business/deferred.md)) — is an immutable firmware
 image with A/B partition rollback (Yocto/Buildroot + RAUC or Mender-style
 OTA) — see [guides/hardware.md](../guides/hardware.md). The `iron` binary is
 static and has no runtime dependencies, which is what makes that packaging
@@ -243,7 +244,7 @@ in-process transport and SQLite.
 
 | Variable | Required | Description |
 |---|---|---|
-| `IRON_SECRET_KEY` | when serving beyond localhost | Session/token signing secret (`iron secret generate`) |
+| `IRON_SECRET_KEY` | when serving beyond localhost | Session/token signing secret — any long random string |
 | `IRON_HOST` | when serving beyond localhost | Hostname for cookie security |
 | `DATABASE_URL` | plant mode | PostgreSQL connection string; unset = SQLite in `IRON_DATA_DIR` |
 | `NATS_URL` | plant mode | NATS server; unset = in-process transport |

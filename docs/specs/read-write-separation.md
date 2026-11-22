@@ -110,7 +110,7 @@ also a property of transport authorization, not only of code:
 - Data and commands use disjoint subject roots
   ([transport.md](transport.md)).
 - Each edge's credentials allow it to **publish only** its own data, alarm,
-  and result subjects and **subscribe only** to its own command subjects. An
+  result, and session (`edge.`) subjects and **subscribe only** to its own command subjects. An
   edge's credentials MUST NOT permit publishing on `cmd.>` — a compromised
   edge device cannot inject commands into another area. `REQ-RWS-005 integration`
 - Only the Command Service identity may publish on `cmd.>`. No other

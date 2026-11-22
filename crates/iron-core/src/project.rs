@@ -6,13 +6,7 @@ use std::path::Path;
 
 pub fn load(root: &Path) -> io::Result<Files> {
     if !root.join("config/tags").is_dir() {
-        return Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            format!(
-                "{} is not an IRON project: config/tags/ not found",
-                root.display()
-            ),
-        ));
+        return Err(io::Error::new(io::ErrorKind::NotFound, format!("{} is not an IRON project: config/tags/ not found", root.display())));
     }
     let mut files = Files::new();
     walk(root, &root.join("config"), &mut files)?;
@@ -31,13 +25,11 @@ fn walk(root: &Path, dir: &Path, files: &mut Files) -> io::Result<()> {
         if path.is_dir() {
             walk(root, &path, files)?;
         } else if path.extension().is_some_and(|e| e == "yaml" || e == "yml") {
-            let rel: Vec<String> = path
-                .strip_prefix(root)
-                .unwrap_or(&path)
-                .components()
-                .map(|c| c.as_os_str().to_string_lossy().into_owned())
-                .collect();
-            files.insert(rel.join("/"), std::fs::read_to_string(&path)?);
+            let rel: Vec<String> =
+                path.strip_prefix(root).unwrap_or(&path).components().map(|c| c.as_os_str().to_string_lossy().into_owned()).collect();
+            // Name the file: the bare io error ("stream did not contain valid UTF-8") does not.
+            let text = std::fs::read_to_string(&path).map_err(|e| io::Error::new(e.kind(), format!("{}: {e}", path.display())))?;
+            files.insert(rel.join("/"), text);
         }
     }
     Ok(())

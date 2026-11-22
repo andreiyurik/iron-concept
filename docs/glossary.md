@@ -16,7 +16,7 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **Store-and-forward** | Edge buffering (SQLite) during network loss with ordered replay after reconnect; no data loss across outages |
 | **Heartbeat** | Forced periodic publish (default 60s) so "stable value" is distinguishable from "dead link" |
 | **READ path** | Sensors → edge → transport → storage → UI. Strictly one-directional. Spec: [specs/read-write-separation.md](specs/read-write-separation.md) |
-| **WRITE path / command** | Operator → auth → RBAC → audit → Command Service → edge → machine. The only way IRON changes the physical world. Spec: [specs/command-path.md](specs/command-path.md) |
+| **WRITE path / command** | Operator → auth → RBAC → Command Service → audit journal → edge → machine. The only way IRON changes the physical world. Spec: [specs/command-path.md](specs/command-path.md) |
 | **Command Service** | The single component that can cause a write, and only to targets declared in `config/commands/`; the WRITE path's one entry point |
 | **Transport** | The contract between the edge and server roles — message kinds, delivery guarantees, session — with two bindings: in-process channels and NATS JetStream. Spec: [specs/transport.md](specs/transport.md) |
 | **Committed / effective config** | Committed: the spec files at a Git commit. Effective: committed config plus adjustments — what actually runs. Spec: [specs/config-lifecycle.md](specs/config-lifecycle.md) |
@@ -36,7 +36,7 @@ document contradicts the glossary, the document is wrong — fix one of them.
 | **Mimic (mnemonic diagram)** | The P&ID-style operator screen; in IRON, an SVG with `data-iron-*` bindings. Spec: [specs/visual-system.md](specs/visual-system.md) |
 | **Widget** | A pre-built dashboard component (gauge, trend, alarm panel…) bound to tags or commands |
 | **UNS (Unified Namespace)** | The pattern where every data point has one canonical hierarchical address; in IRON that address is the tag path, mapped onto NATS subjects in plant mode |
-| **Subject** | A NATS topic, e.g. `data.plant.line_1.reactor_01.temperature` (root · site · tag path); authorization is per-subject. Roots: `data`, `alarm`, `cmd`, `result`, `edge` |
+| **Subject** | A NATS topic, e.g. `data.plant.reactor_01.temperature` (root · site · tag path); authorization is per-subject. Roots: `data`, `alarm`, `cmd`, `result`, `edge` |
 | **OT / IT** | Operational technology (plant floor: PLCs, sensors, VLAN 10) / information technology (servers, VLAN 20) |
 | **PLC** | Programmable logic controller — the device executing control logic in a deterministic scan cycle |
 | **Scan cycle** | The PLC's read-inputs → execute-logic → write-outputs loop, typically 1–10ms |

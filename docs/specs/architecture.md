@@ -28,7 +28,7 @@ IRON has a two-layer architecture with a clear boundary between runtime and inte
 │  • Derived tags — expressions over the tags it owns              │
 └───────────────────────────┬─────────────────────────────────────┘
                             │ transport contract (in-process · NATS JetStream)
-                            │ tag address: line_1.reactor_01.temperature
+                            │ tag address: reactor_01.temperature
 ┌───────────────────────────▼─────────────────────────────────────┐
 │  iron-server  (Rust)                                             │
 │                                                                  │
@@ -97,9 +97,9 @@ guarantees, the session handshake — is one contract, specified in
 Properties of the contract that shape everything else:
 
 - Every tag has exactly one canonical address, its dotted path
-  (`line_1.reactor_01.temperature`) — the Unified Namespace concept. In the
-  NATS binding it maps to the subject `data.<site>.line_1.reactor_01.temperature`,
-  and `data.<site>.line_1.>` is all of line 1.
+  (`reactor_01.temperature`) — the Unified Namespace concept. In the
+  NATS binding it maps to the subject `data.<site>.reactor_01.temperature`,
+  and `data.<site>.reactor_01.>` is all of reactor 01.
 - Data is at-least-once and replayable; a restarted server catches up.
 - Commands are at-most-once and never stored.
 - Data and commands live in **separate authorization scopes** —
@@ -107,7 +107,8 @@ Properties of the contract that shape everything else:
 
 ## Scaling design
 
-> **Status: design targets.** IRON has no implementation yet. The numbers below
+> **Status: design targets.** Nothing described here is built yet — the code
+> so far validates and simulates. The numbers below
 > describe how the architecture is intended to behave, derived from published
 > benchmarks of the underlying technologies — not from measurements of IRON
 > itself. Converting them into measured facts (100k simulated tags, 50
@@ -172,7 +173,7 @@ two flows separated on a shared broker.
 
 | Hardware | Cost | Use case |
 |---|---|---|
-| Raspberry Pi CM4 (industrial carrier) | ~$150 | Small plants, greenhouses, up to ~2,000 tags |
+| Raspberry Pi CM4 (industrial carrier) | ~$150 | Small plants, greenhouses, up to ~2,000 tags (target, unmeasured) |
 | Beelink EQ12 (Intel N100, passive cooling) | ~$150 | Mid-size plants, DIN-rail mounting |
 | CLICK PLUS PLC | ~$200 | PLC + edge agent on same hardware (Linux inside) |
 | x86 industrial PC | $300–800 | Large plants, demanding workloads |

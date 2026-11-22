@@ -72,7 +72,8 @@ access to time, history, or I/O.
   order. `REQ-EXP-003 unit`
 - **Total and bounded.** Evaluation always terminates in time proportional to
   the expression size. The validator rejects expressions nested deeper than
-  64 levels.
+  64 levels or longer than 512 tokens — a flat chain of operators is as
+  deep a tree as nesting is.
 - **Arithmetic MUST NOT panic and MUST NOT yield a non-finite value.** Division
   by zero, `sqrt` of a negative, `ln`/`log10` of a non-positive number, and
   any result that is NaN or infinite produce *no value*: the derived tag's

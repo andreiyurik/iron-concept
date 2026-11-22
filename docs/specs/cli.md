@@ -44,8 +44,8 @@ iron upgrade    migrate project files to a newer configuration format
 
 That is the whole surface. `iron` is one binary — CLI, server, simulator, and
 MCP server share one core ([ADR 0009](../decisions/0009-rust-for-the-server.md));
-every command is also reachable as an MCP tool with the same schema
-([agent-interface.md](agent-interface.md)). Commands that were considered
+the agent interface exposes a deliberate subset of the commands as MCP tools
+with the same schema ([agent-interface.md](agent-interface.md)). Commands that were considered
 and deliberately left out of v1 — WASM module management, contract diff, split
 roles — are in [business/deferred.md](../business/deferred.md) with the
 trigger that brings each back.
@@ -66,7 +66,7 @@ The five-minute path, stated falsifiably:
 00:00  iron new greenhouse --template greenhouse && cd greenhouse
 00:10  iron dev
 00:20  open http://localhost:4000
-       → 15 tags, live trend chart, one simulated alarm with ack button
+       → 15 tags, live trend chart, one simulated alarm, visible and counted
 05:00  a working monitoring system, no PLC, no Docker, no Windows, no license key
 ```
 
@@ -297,7 +297,7 @@ Splitting `server` further into `ui` and `core` for a DMZ is *deferred*
 
 ```bash
 iron agent mcp       # serve validate · explain · generate as MCP tools over stdio
-iron agent skill     # print the IRON skill file (also shipped in the scaffold)
+iron agent skill     # print the conventions the scaffold ships as AGENTS.md
 ```
 
 Same core, same schemas, same diagnostics as the CLI. There is no MCP tool

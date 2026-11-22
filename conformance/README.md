@@ -3,8 +3,9 @@
 The executable form of the specs: inputs and the exact outputs an
 implementation must produce. Language-neutral YAML, so the same vectors test
 the Rust core, a future second implementation, or a plugin author's
-assumptions. **Status: no software runs these yet** — they are what the
-first implementation is written against.
+assumptions. **Status:** `validate`, `expressions`, `decode`, `publish`,
+and `alarms` are run by the test suites of `iron-domain` and `iron-core`;
+`commands` has no implementation behind it yet.
 
 | File | What it pins down | Spec |
 |---|---|---|
@@ -17,8 +18,9 @@ first implementation is written against.
 
 Rules:
 
-- Every case cites the requirement it proves (`requirement: REQ-…`, from the
-  [requirements index](../docs/requirements.md)). `scripts/requirements.py
+- A case that pins down a numbered requirement cites it (`requirement:
+  REQ-…`, from the [requirements index](../docs/requirements.md)); cases
+  without one illustrate ordinary behavior. `scripts/requirements.py
   --check` fails on an identifier that does not exist.
 - A diagnostic is matched on `severity`, `path`, and `requirement`. Message
   wording is free; codes are assigned by the implementation and then frozen.

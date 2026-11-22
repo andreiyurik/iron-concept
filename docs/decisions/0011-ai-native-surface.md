@@ -25,7 +25,8 @@ Five rules, normatively specified in
 
 1. **One core, two interfaces.** Every operation lives once, as a function
    in the `iron-core` library API. The `iron` CLI and the `iron agent mcp`
-   server are thin wrappers with full parity: `iron validate --json` and the
+   server are thin wrappers over it — the same result for every operation both
+   expose (v1 exposes three to agents; no MCP tool submits a command): `iron validate --json` and the
    MCP tool `validate` call the same code, return the same structured result,
    with the same diagnostics. MCP ships in Phase 1, not at the end — the
    bootstrap loop requires it — and it ships small: three tools.

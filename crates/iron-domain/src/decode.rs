@@ -12,6 +12,8 @@ pub enum ByteOrder {
 }
 
 impl ByteOrder {
+    pub const NAMES: &str = "ABCD, CDAB, BADC, or DCBA";
+
     #[must_use]
     pub fn parse(s: &str) -> Option<ByteOrder> {
         Some(match s {
@@ -30,18 +32,10 @@ pub enum DecodeError {
     Bit,
 }
 
-pub fn decode(
-    ty: TagType,
-    order: ByteOrder,
-    registers: &[u16],
-    bit: Option<u8>,
-) -> Result<Value, DecodeError> {
+pub fn decode(ty: TagType, order: ByteOrder, registers: &[u16], bit: Option<u8>) -> Result<Value, DecodeError> {
     let expected = ty.register_count();
     if registers.len() != expected {
-        return Err(DecodeError::RegisterCount {
-            expected,
-            got: registers.len(),
-        });
+        return Err(DecodeError::RegisterCount { expected, got: registers.len() });
     }
     if ty == TagType::Bool {
         return match bit {
@@ -53,7 +47,6 @@ pub fn decode(
     if bit.is_some() {
         return Err(DecodeError::Bit);
     }
-    // Normalize to big-endian bytes.
     let mut words: Vec<u16> = registers.to_vec();
     if matches!(order, ByteOrder::Cdab | ByteOrder::Dcba) {
         words.reverse();
