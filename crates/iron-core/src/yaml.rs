@@ -1,73 +1,43 @@
-//! Reading spec files: YAML text → a small tree with source positions, plus
-//! the checks that keep files inside IRON's lossless subset
-//! (`docs/specs/config-lifecycle.md`, REQ-CFG-005).
-//!
-//! This module is the only place that touches the YAML library on the read
-//! path, so the rest of the crate depends on our tree, not on its API.
+//! Spec files → a small tree with source positions; enforces the YAML subset.
 
 use std::str::FromStr;
 use yaml_edit::{Document, YamlFile, YamlKind, YamlNode};
 
-/// A byte range in the source text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Span {
-    /// Start offset.
     pub start: usize,
-    /// End offset, exclusive.
     pub end: usize,
 }
 
-/// A node of a parsed file.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Node {
-    /// Where it is.
     pub span: Span,
-    /// What it is.
     pub kind: Kind,
 }
 
-/// The three shapes a node can have.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Kind {
-    /// A mapping, in source order.
     Map(Vec<Entry>),
-    /// A sequence.
     Seq(Vec<Node>),
-    /// A scalar.
-    Scalar {
-        /// The text with quotes removed.
-        text: String,
-        /// Whether it was quoted — a quoted `"1"` is text, not a number.
-        quoted: bool,
-    },
+    Scalar { text: String, quoted: bool },
 }
 
-/// One `key: value` pair.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Entry {
-    /// The key.
     pub key: String,
-    /// Where the key is.
     pub key_span: Span,
-    /// The value.
     pub value: Node,
 }
 
-/// A construct outside the subset, or a syntax error.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Problem {
-    /// Where.
     pub span: Span,
-    /// Dotted path of the nearest enclosing entry; empty at file level.
     pub path: String,
-    /// What is wrong.
     pub message: String,
-    /// True for a syntax error, false for a subset violation.
     pub syntax: bool,
 }
 
 impl Node {
-    /// The entries of a mapping.
     #[must_use]
     pub fn entries(&self) -> Option<&[Entry]> {
         match &self.kind {
@@ -76,7 +46,6 @@ impl Node {
         }
     }
 
-    /// The value under `key` in a mapping.
     #[must_use]
     pub fn get(&self, key: &str) -> Option<&Node> {
         self.entries()?
@@ -85,7 +54,6 @@ impl Node {
             .map(|e| &e.value)
     }
 
-    /// The text of a scalar.
     #[must_use]
     pub fn as_str(&self) -> Option<&str> {
         match &self.kind {
@@ -94,7 +62,6 @@ impl Node {
         }
     }
 
-    /// An unquoted scalar read as a number: decimal, or `0x` hexadecimal.
     #[must_use]
     pub fn as_f64(&self) -> Option<f64> {
         let Kind::Scalar {
@@ -116,7 +83,6 @@ impl Node {
             .filter(|v| numeric && v.is_finite())
     }
 
-    /// An unquoted `true` or `false`.
     #[must_use]
     pub fn as_bool(&self) -> Option<bool> {
         match &self.kind {
@@ -132,7 +98,6 @@ impl Node {
         }
     }
 
-    /// The items of a sequence.
     #[must_use]
     pub fn items(&self) -> Option<&[Node]> {
         match &self.kind {
@@ -142,8 +107,6 @@ impl Node {
     }
 }
 
-/// Parses one file. Returns the root (absent for an empty or unreadable
-/// file) and every problem found.
 #[must_use]
 pub fn parse(src: &str) -> (Option<Node>, Vec<Problem>) {
     let mut problems = Vec::new();
@@ -336,7 +299,6 @@ fn node(src: &str, n: &YamlNode, span: Span, path: &str, problems: &mut Vec<Prob
     }
 }
 
-/// Converts a byte offset to a 1-based line and column.
 #[must_use]
 pub fn line_col(src: &str, offset: usize) -> (usize, usize) {
     let before = &src[..offset.min(src.len())];
@@ -374,7 +336,7 @@ mod tests {
         assert_eq!(line_col(src, a.get("r").unwrap().span.start), (3, 6));
     }
 
-    /// REQ-CFG-005.
+    // REQ-CFG-005.
     #[test]
     fn rejects_constructs_outside_the_subset() {
         let cases = [

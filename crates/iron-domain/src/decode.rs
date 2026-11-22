@@ -1,23 +1,17 @@
-//! Register decoding (`docs/specs/protocol-drivers.md`, "Modbus addressing").
+//! Register decoding (`docs/specs/protocol-drivers.md`).
 
 use crate::{TagType, Value};
 
-/// Position of a value's bytes on the wire. `ABCD` is big-endian.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum ByteOrder {
-    /// Big-endian words, big-endian bytes — the Modbus convention.
     #[default]
     Abcd,
-    /// Word order reversed.
     Cdab,
-    /// Bytes swapped inside each word.
     Badc,
-    /// Little-endian: both reversed.
     Dcba,
 }
 
 impl ByteOrder {
-    /// Parses `ABCD`, `CDAB`, `BADC`, `DCBA`.
     #[must_use]
     pub fn parse(s: &str) -> Option<ByteOrder> {
         Some(match s {
@@ -30,25 +24,12 @@ impl ByteOrder {
     }
 }
 
-/// Why a set of registers could not be decoded.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DecodeError {
-    /// The number of registers does not match the type.
-    RegisterCount {
-        /// Registers the type needs.
-        expected: usize,
-        /// Registers supplied.
-        got: usize,
-    },
-    /// A bit index outside 0–15, or a bit given for a non-`bool` type.
+    RegisterCount { expected: usize, got: usize },
     Bit,
 }
 
-/// Decodes registers, given in address order, into a value.
-///
-/// For `bool`, `bit` selects one bit of the register; without it, any
-/// non-zero register is `true`. Decoding follows `order` (REQ-DRV-010); for
-/// 64-bit values the same four orders apply to the four words.
 pub fn decode(
     ty: TagType,
     order: ByteOrder,

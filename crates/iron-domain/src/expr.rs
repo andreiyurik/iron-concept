@@ -1,50 +1,27 @@
 //! The one expression language (`docs/specs/expressions.md`).
-//!
-//! Small, pure, and total: two types, arithmetic, comparison, boolean logic,
-//! a fixed list of functions. Parsing is bounded in depth, checking is
-//! static, and evaluation cannot panic or yield a non-finite number.
 
 use crate::{Quality, Sample, Value};
 use std::fmt;
 
-/// Maximum nesting depth the parser accepts.
 pub const MAX_DEPTH: usize = 64;
 
-/// A parsed expression.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
-    /// A numeric literal. `int` records that it was written without a
-    /// fraction, which matters only in the expansion context.
-    Num {
-        /// The value.
-        value: f64,
-        /// Written as an integer.
-        int: bool,
-    },
-    /// `true` or `false`.
+    Num { value: f64, int: bool },
     Bool(bool),
-    /// A tag path at runtime, or a type parameter during expansion.
     Ref(String),
-    /// A prefix operator.
     Unary(UnaryOp, Box<Expr>),
-    /// An infix operator.
     Binary(BinaryOp, Box<Expr>, Box<Expr>),
-    /// A built-in function call.
     Call(Func, Vec<Expr>),
 }
 
-/// Prefix operators.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnaryOp {
-    /// Arithmetic negation.
     Neg,
-    /// Boolean negation.
     Not,
 }
 
-/// Infix operators.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(missing_docs)]
 pub enum BinaryOp {
     Add,
     Sub,
@@ -61,9 +38,7 @@ pub enum BinaryOp {
     Or,
 }
 
-/// The built-in functions — the complete list.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(missing_docs)]
 pub enum Func {
     Abs,
     Min,
@@ -80,44 +55,28 @@ pub enum Func {
     If,
 }
 
-/// The two value types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
-    /// A number.
     Number,
-    /// A boolean.
     Bool,
 }
 
-/// What kind of problem an expression has.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorKind {
-    /// Not well-formed.
     Syntax,
-    /// Nested deeper than [`MAX_DEPTH`].
     TooDeep,
-    /// Names a tag or parameter that does not exist.
     UnknownReference,
-    /// An operand of the wrong type.
     TypeMismatch,
-    /// The two branches of `if` have different types (REQ-EXP-001).
     IfBranches,
-    /// Not one of the built-in functions.
     UnknownFunction,
-    /// Wrong number of arguments.
     Arity,
-    /// Expansion produced no finite value.
     NoValue,
 }
 
-/// An error with the byte offset it refers to.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExprError {
-    /// The category.
     pub kind: ErrorKind,
-    /// Byte offset in the source text.
     pub pos: usize,
-    /// What is wrong, for a diagnostic.
     pub message: String,
 }
 
@@ -136,8 +95,6 @@ fn err<T>(kind: ErrorKind, pos: usize, message: impl Into<String>) -> Result<T, 
         message: message.into(),
     })
 }
-
-// ---------------------------------------------------------------- lexer
 
 #[derive(Debug, Clone, PartialEq)]
 enum Tok {
@@ -230,8 +187,6 @@ fn lex(src: &str) -> Result<Vec<(Tok, usize)>, ExprError> {
     }
     Ok(out)
 }
-
-// --------------------------------------------------------------- parser
 
 struct Parser {
     toks: Vec<(Tok, usize)>,
@@ -421,7 +376,6 @@ impl Parser {
     }
 }
 
-/// Parses an expression.
 pub fn parse(src: &str) -> Result<Expr, ExprError> {
     let mut p = Parser {
         toks: lex(src)?,
@@ -437,7 +391,6 @@ pub fn parse(src: &str) -> Result<Expr, ExprError> {
 }
 
 impl Expr {
-    /// Every name the expression references, in order of first appearance.
     #[must_use]
     pub fn refs(&self) -> Vec<&str> {
         fn walk<'a>(e: &'a Expr, out: &mut Vec<&'a str>) {
@@ -457,8 +410,6 @@ impl Expr {
         out
     }
 
-    /// Type-checks the expression (REQ-EXP-001, REQ-EXP-002, REQ-EXP-005).
-    /// `types` gives the declared type of each referenced name.
     pub fn check(&self, types: &dyn Fn(&str) -> Option<Type>) -> Result<Type, ExprError> {
         use BinaryOp::*;
         let want = |e: &Expr, t: Type| -> Result<(), ExprError> {
@@ -520,9 +471,7 @@ impl Expr {
         }
     }
 
-    /// Computes the value from already-resolved operands. `None` means "no
-    /// value": a missing operand, a type error, or a result that is not
-    /// finite (REQ-EXP-006). Never panics.
+    // REQ-EXP-006: None instead of a panic or a non-finite number.
     #[must_use]
     pub fn value(&self, get: &dyn Fn(&str) -> Option<Value>) -> Option<Value> {
         use BinaryOp::*;
@@ -591,11 +540,6 @@ impl Expr {
         }
     }
 
-    /// Evaluates a derived tag from its inputs.
-    ///
-    /// The quality is the worst among **all** referenced tags, including the
-    /// branch of an `if` that was not taken (REQ-EXP-007); a tag with no
-    /// sample counts as `Bad`. A `Bad` result carries no value.
     #[must_use]
     pub fn evaluate(&self, inputs: &dyn Fn(&str) -> Option<Sample>) -> Evaluated {
         let quality = self
@@ -621,17 +565,13 @@ impl Expr {
         }
     }
 
-    /// Evaluates a `suppressed_when` condition. It fails toward
-    /// annunciation: unless every referenced tag is `Good` and the result is
-    /// `true`, the alarm is not suppressed (REQ-EXP-008).
+    // REQ-EXP-008: fails toward annunciation.
     #[must_use]
     pub fn suppresses(&self, inputs: &dyn Fn(&str) -> Option<Sample>) -> bool {
         let e = self.evaluate(inputs);
         e.quality == Quality::Good && e.value == Some(Value::Bool(true))
     }
 
-    /// Whether the result is an integer given integer operands. Used only in
-    /// the expansion context, to print `272` rather than `272.0`.
     fn is_int(&self, param_int: &dyn Fn(&str) -> bool) -> bool {
         use BinaryOp::*;
         match self {
@@ -652,48 +592,24 @@ impl Expr {
     }
 }
 
-/// The result of evaluating a derived tag.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Evaluated {
-    /// The value, absent when the quality is `Bad`.
     pub value: Option<Value>,
-    /// The resulting quality.
     pub quality: Quality,
 }
 
-// ------------------------------------------------------------ expansion
-
-/// A device-type parameter value.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Param {
-    /// A number; `int` when it was written without a fraction.
-    Number {
-        /// The value.
-        value: f64,
-        /// Written as an integer.
-        int: bool,
-    },
-    /// Text, such as a connection alias or the instance name. Usable only as
-    /// a bare `{name}`.
+    Number { value: f64, int: bool },
     Text(String),
 }
 
-/// The result of expanding one templated field.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expanded {
-    /// The whole field was one `{…}` that produced a number.
-    Number {
-        /// The value.
-        value: f64,
-        /// It is an integer.
-        int: bool,
-    },
-    /// Text with every `{…}` substituted.
+    Number { value: f64, int: bool },
     Text(String),
 }
 
-/// Expands `{…}` groups in a device-type field
-/// (`docs/specs/expressions.md`, "Expansion context").
 pub fn expand(
     template: &str,
     params: &dyn Fn(&str) -> Option<Param>,

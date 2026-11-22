@@ -1,8 +1,4 @@
-//! `iron validate`: every spec file checked against its invariants
-//! (`docs/specs/cli.md`, `docs/specs/tag-model.md`).
-//!
-//! Input is a set of files, not a directory, so the same function serves the
-//! CLI, tests, and any future caller that holds a project in memory.
+//! `iron validate`: every spec file checked against its invariants.
 
 use crate::diag::{self, Diagnostic, Location, Report, Rule, Severity};
 use crate::yaml::{self, Entry, Node, Span};
@@ -11,7 +7,6 @@ use iron_domain::source::{parse_modbus, SourceError, Table};
 use iron_domain::TagType;
 use std::collections::{BTreeMap, BTreeSet};
 
-/// Project files: path relative to the project root → content.
 pub type Files = BTreeMap<String, String>;
 
 const SCHEMES: [&str; 10] = [
@@ -69,29 +64,24 @@ const COMMAND_FIELDS: [&str; 11] = [
 const ROLES: [&str; 4] = ["viewer", "operator", "engineer", "admin"];
 const LEVELS: [&str; 4] = ["low_low", "low", "high", "high_high"];
 
-/// An expression waiting for the cross-file check.
 struct Pending {
     file: String,
     path: String,
     span: Span,
     expr: Expr,
-    /// The type the expression must have.
     want: Type,
 }
 
 struct Validator<'a> {
     files: &'a Files,
     diags: Vec<Diagnostic>,
-    /// Declared type of every tag, by canonical path.
     types: BTreeMap<String, Type>,
     derived: Vec<Pending>,
     conditions: Vec<Pending>,
-    /// Command path → (file, feedback tag and where it is written).
     feedback: Vec<(String, String, Span, String)>,
     commands: BTreeSet<String>,
 }
 
-/// Validates a project.
 #[must_use]
 pub fn validate(files: &Files) -> Report {
     let mut v = Validator {
@@ -189,8 +179,6 @@ impl Validator<'_> {
         );
     }
 
-    /// Parses a file. A file with a syntax error or a construct outside the
-    /// subset is reported and not interpreted further.
     fn read(&mut self, file: &str, src: &str) -> Option<Node> {
         let (root, problems) = yaml::parse(src);
         let clean = problems.is_empty();
@@ -217,8 +205,6 @@ impl Validator<'_> {
         }
         root.filter(|_| clean)
     }
-
-    // ------------------------------------------------------------- tags
 
     fn tag_file(&mut self, file: &str, root: &Node) {
         for area in root.entries().unwrap_or_default() {
@@ -666,8 +652,6 @@ impl Validator<'_> {
         }
     }
 
-    // --------------------------------------------------------- commands
-
     fn command_file(&mut self, file: &str, root: &Node) {
         for area in root.entries().unwrap_or_default() {
             for cmd in area.value.entries().unwrap_or_default() {
@@ -811,8 +795,6 @@ impl Validator<'_> {
         }
     }
 
-    // ---------------------------------------------------------- helpers
-
     fn duration(&mut self, file: &str, path: &str, node: &Node) {
         if node.as_str().and_then(parse_duration_ms).is_none() {
             self.error(
@@ -826,7 +808,6 @@ impl Validator<'_> {
         }
     }
 
-    /// A `[a, b]` pair; `ordered` additionally requires `a < b`.
     fn pair(&mut self, file: &str, path: &str, node: &Node, ordered: bool) -> Option<(f64, f64)> {
         let pair = match node.items() {
             Some([a, b]) => a.as_f64().zip(b.as_f64()),
@@ -935,8 +916,7 @@ impl Validator<'_> {
             .collect();
     }
 
-    /// Reports each dependency cycle among derived tags once, at its first
-    /// member in path order (REQ-EXP-003).
+    // REQ-EXP-003: one report per cycle, at its first member.
     fn check_cycles(&mut self) {
         let graph: BTreeMap<&str, Vec<&str>> = self
             .derived
@@ -997,7 +977,6 @@ impl Validator<'_> {
     }
 }
 
-/// Parses `500ms`, `5s`, `2m`, `1h` into milliseconds.
 #[must_use]
 pub fn parse_duration_ms(text: &str) -> Option<u64> {
     let split = text.find(|c: char| !c.is_ascii_digit() && c != '.')?;

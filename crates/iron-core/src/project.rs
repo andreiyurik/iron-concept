@@ -4,12 +4,6 @@ use crate::validate::Files;
 use std::io;
 use std::path::Path;
 
-/// Reads every YAML file under `<root>/config` into memory, keyed by its
-/// path relative to `root` with `/` separators.
-///
-/// Fails with `NotFound` when `<root>/config/tags` does not exist: a project
-/// containing only `config/tags/` is complete, and one without it is not a
-/// project (`docs/specs/cli.md`, the complexity budget).
 pub fn load(root: &Path) -> io::Result<Files> {
     if !root.join("config/tags").is_dir() {
         return Err(io::Error::new(
