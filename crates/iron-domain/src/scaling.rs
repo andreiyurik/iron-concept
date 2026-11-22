@@ -2,22 +2,12 @@
 
 use crate::Quality;
 
-/// A linear conversion between a raw range and an engineering range.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Scaling {
-    /// Raw range `[low, high]` as delivered by the device.
     pub raw: (f64, f64),
-    /// Engineering range the raw range maps onto.
     pub engineering: (f64, f64),
 }
 
-/// Converts one raw reading.
-///
-/// - With `scaling`: linear conversion; a raw value outside the declared raw
-///   range clamps to the boundary and degrades to `Uncertain` (REQ-TAG-009).
-/// - Without `scaling`: the value is taken unchanged (REQ-TAG-011); outside
-///   `range` it is still published as read, with `Uncertain` (REQ-TAG-012).
-/// - A non-finite raw value is `Bad`.
 #[must_use]
 pub fn convert(raw: f64, scaling: Option<Scaling>, range: Option<(f64, f64)>) -> (f64, Quality) {
     if !raw.is_finite() {

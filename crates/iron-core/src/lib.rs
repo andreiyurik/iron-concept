@@ -1,7 +1,4 @@
-//! IRON's operations library — what the CLI, the MCP server, and a future
-//! language server wrap (`docs/specs/agent-interface.md`).
-//!
-//! Implemented so far: reading project files and `validate`.
+//! IRON's operations library: what the CLI and MCP wrap.
 
 pub mod diag;
 pub mod project;

@@ -1,8 +1,4 @@
-//! The `iron` command (`docs/specs/cli.md`). A thin wrapper: every operation
-//! lives in `iron-core`, and `--json` prints the same document an agent
-//! interface would return.
-//!
-//! Exit codes: 0 success, 1 validation failure, 2 environment or usage error.
+//! The `iron` command: a thin wrapper over iron-core. Exit codes 0 / 1 / 2.
 
 use iron_core::{Report, Severity};
 use std::path::PathBuf;

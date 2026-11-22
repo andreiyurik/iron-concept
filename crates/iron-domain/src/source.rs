@@ -1,55 +1,31 @@
-//! Source URI parsing (`docs/specs/protocol-drivers.md`, "Modbus addressing").
+//! Source URI parsing (`docs/specs/protocol-drivers.md`).
 
 use crate::decode::ByteOrder;
 
-/// A Modbus data table.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Table {
-    /// Coils: read FC01, write FC05.
     Coil,
-    /// Discrete inputs: FC02.
     Discrete,
-    /// Holding registers: read FC03, write FC06/FC16.
     Holding,
-    /// Input registers: FC04.
     Input,
 }
 
-/// A parsed `modbus://` source.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ModbusSource {
-    /// Connection alias, hostname, or IP address.
     pub host: String,
-    /// The data table.
     pub table: Table,
-    /// Zero-based protocol address.
     pub address: u16,
-    /// Bit of a 16-bit register, for packed `bool` tags.
     pub bit: Option<u8>,
-    /// Per-tag byte-order override.
     pub order: Option<ByteOrder>,
 }
 
-/// Why a source URI was rejected.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SourceError {
-    /// Not a `modbus://` URI.
     Scheme,
-    /// Malformed; the message says what was expected.
     Syntax(String),
-    /// A datasheet-style address such as `40001` (REQ-DRV-009). `suggested`
-    /// is the zero-based protocol address it most likely means.
-    DatasheetNotation {
-        /// The converted address to offer in the hint.
-        suggested: u16,
-    },
+    DatasheetNotation { suggested: u16 },
 }
 
-/// Parses `modbus://<host>/<table>/<address>[?bit=<n>][&order=<order>]`.
-///
-/// Decimal addresses that look like datasheet notation (`4xxxx` on holding
-/// registers, `3xxxx` on input registers) are rejected with the converted
-/// address; the hexadecimal form is always taken literally.
 pub fn parse_modbus(uri: &str) -> Result<ModbusSource, SourceError> {
     let rest = uri.strip_prefix("modbus://").ok_or(SourceError::Scheme)?;
     let (path, query) = match rest.split_once('?') {

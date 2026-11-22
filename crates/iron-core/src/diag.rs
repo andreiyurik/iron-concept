@@ -1,64 +1,40 @@
-//! Diagnostics: the one format IRON reports problems in
-//! (`docs/specs/agent-interface.md`, "Diagnostics teach").
+//! Diagnostics: the one format IRON reports problems in.
 
 use serde::Serialize;
 
-/// How serious a diagnostic is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
-    /// The project is invalid.
     Error,
-    /// Worth attention; the project is still valid.
     Warning,
 }
 
-/// Where a diagnostic points. Lines and columns are 1-based.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Location {
-    /// File, relative to the project root.
     pub file: String,
-    /// Dotted path of the offending element.
     pub path: String,
-    /// First line.
     pub line: usize,
-    /// First column.
     pub col: usize,
-    /// Last line.
     pub end_line: usize,
-    /// Column after the last character.
     pub end_col: usize,
 }
 
-/// One problem, written to be read by a person or pasted to an agent.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Diagnostic {
-    /// Stable code. Never reused for a different condition.
     pub code: &'static str,
-    /// Error or warning.
     pub severity: Severity,
-    /// Where.
     pub location: Location,
-    /// What is wrong.
     pub message: String,
-    /// What to do about it.
     pub hint: String,
-    /// The requirement this diagnostic enforces, when there is one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub requirement: Option<&'static str>,
-    /// The spec that defines the rule.
     pub docs: &'static str,
 }
 
-/// A rule: its code, the requirement behind it, and its spec. Codes are
-/// assigned here once and then frozen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Rule {
-    /// Stable code.
     pub code: &'static str,
-    /// Requirement identifier from `docs/requirements.md`.
     pub requirement: Option<&'static str>,
-    /// Spec file.
     pub docs: &'static str,
 }
 
@@ -96,19 +72,14 @@ rules! {
     NOT_VALIDATED    = "IRON-W900", None, "business/roadmap.md";
 }
 
-/// The outcome of validating a project.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Report {
-    /// How many tags the project defines.
     pub tags: usize,
-    /// How many commands the project defines.
     pub commands: usize,
-    /// Everything found, ordered by file and position.
     pub diagnostics: Vec<Diagnostic>,
 }
 
 impl Report {
-    /// Number of errors.
     #[must_use]
     pub fn errors(&self) -> usize {
         self.diagnostics
@@ -117,7 +88,6 @@ impl Report {
             .count()
     }
 
-    /// True when the project has no errors.
     #[must_use]
     pub fn is_valid(&self) -> bool {
         self.errors() == 0

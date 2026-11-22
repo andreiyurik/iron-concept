@@ -89,6 +89,10 @@ these are the rules everything else follows.
   assigned once and never reused or renumbered. Crates are added when a
   feature needs them, not ahead of it.
 - `unsafe` is forbidden workspace-wide. Warnings are errors in CI.
+- **Almost no comments.** Code is compact and reads without commentary. No
+  doc comment per item, nothing that restates the code. A comment stays
+  only for a non-obvious reason, a trap, or a requirement identifier — one
+  short line. One `//!` line at the top of a file says what it is for.
 - Tests read the vectors in `conformance/` directly. If a vector and the
   code disagree, decide which is wrong against the spec — never edit a
   vector just to make a test pass.
