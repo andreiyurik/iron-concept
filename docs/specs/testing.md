@@ -172,21 +172,21 @@ every time. Scenarios are also *generated* from tag specs
 name: high_temp_alarm
 timeline:
   - t: 0s
-    set: { reactor_01.temp_raw: 19.2 }     # 190°C — above HIGH (180)
+    set: { reactor_01.temperature: 190 }   # above HIGH (180)
   - t: 2s
-    set: { reactor_01.temp_raw: 20.0 }     # 200°C — above HIGH_HIGH (195)
+    set: { reactor_01.temperature: 200 }   # above HIGH_HIGH (195)
 assertions:
   - at: 1s
-    expect: { reactor_01.alarm_high: active, reactor_01.alarm_high_high: normal }
+    expect: { reactor_01.temperature.high: active, reactor_01.temperature.high_high: normal }
   - at: 3s
-    expect: { reactor_01.alarm_high_high: active }
+    expect: { reactor_01.temperature.high_high: active }
 ```
 
 ```yaml
 # test/sim/scenarios/network_loss.yaml
 timeline:
   - { t: 5s,  fault: nats_disconnect }
-  - { t: 5s–25s, set: { reactor_01.temp_raw: 17.0 } }
+  - { t: 5s–25s, set: { reactor_01.temperature: 170 } }
   - { t: 25s, fault: nats_reconnect }
 assertions:
   - after: nats_reconnect
@@ -198,6 +198,11 @@ Fault injection vocabulary: `nats_disconnect/reconnect`, `plc_timeout`,
 `sensor_out_of_range`, `clock_skew`. When the PLC runtime exists
 ([plc-runtime.md](plc-runtime.md)), Structured Text programs compile to WASM
 and run inside these same scenarios.
+
+A scenario sets tags in **engineering units** and refers to an alarm as
+`<tag path>.<alarm name>`. Implemented so far: `set` on the timeline and
+alarm states (`active` / `normal`) in assertions; fault injection and
+historian assertions are specified below and not yet built.
 
 ```bash
 iron test --sim                          # all scenarios

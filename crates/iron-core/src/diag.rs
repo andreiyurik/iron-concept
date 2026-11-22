@@ -66,6 +66,7 @@ rules! {
     ALARM_FIELDS     = "IRON-E041", None, "specs/alarm-engine.md";
     ALARM_RANGE      = "IRON-E042", Some("REQ-TAG-003"), "specs/tag-model.md";
     ALARM_ACTION     = "IRON-E043", Some("REQ-ALM-001"), "specs/alarm-engine.md";
+    ALARM_NAME       = "IRON-E044", Some("REQ-ALM-004"), "specs/alarm-engine.md";
     COMMAND          = "IRON-E050", None, "specs/command-path.md";
     NOT_IMPLEMENTED  = "IRON-E900", None, "business/roadmap.md";
     MISSING_UNIT     = "IRON-W001", None, "specs/tag-model.md";

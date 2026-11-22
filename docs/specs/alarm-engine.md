@@ -106,6 +106,32 @@ appears only on analog tags and `state` only on `bool` tags.
 [examples/greenhouse](../../examples/greenhouse/README.md) — the example
 exists precisely to catch what the prose missed.)*
 
+## Detection semantics
+
+What "the limit is crossed" means, exactly — the part of the alarm engine
+that runs at the edge on every scan and that the
+[conformance vectors](../../conformance/README.md) pin down.
+
+- On a numeric tag an alarm MUST be named `low_low`, `low`, `high`, or
+  `high_high`; the name gives the direction. On a `bool` tag the name is
+  free and `state` gives the alarming state. `REQ-ALM-004 unit`
+- A `high` or `high_high` alarm MUST become active when the value is at or
+  above its limit; a `low` or `low_low` alarm when the value is at or below
+  it. The limit itself is in alarm. `REQ-ALM-005 unit`
+- An active alarm MUST clear only when the value has moved back past the
+  limit by the alarm's `deadband`: at or below `limit − deadband` for a high
+  alarm, at or above `limit + deadband` for a low one. With no `deadband` it
+  clears as soon as the value is strictly back on the normal side. `REQ-ALM-006 unit`
+- With `on_delay`, the condition MUST hold continuously for that long before
+  the alarm becomes active; with `off_delay`, the clear condition likewise.
+  A condition that lapses during the delay starts over. The transition is
+  timestamped at the moment the delay elapsed. `REQ-ALM-007 unit`
+- A sample with quality `BAD` MUST NOT change an alarm's state in either
+  direction, and it cancels a delay in progress: an unreadable sensor is
+  neither evidence of an alarm nor of its absence. The quality change is
+  itself published and visible ([edge-agent.md](edge-agent.md)). `UNCERTAIN`
+  samples are evaluated normally. `REQ-ALM-008 unit`
+
 ## Alarm flood control
 
 The most common failure of real alarm systems is not a missed alarm — it is

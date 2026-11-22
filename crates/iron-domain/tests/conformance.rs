@@ -335,3 +335,49 @@ fn evaluation_is_total() {
         "generator too weak: {parsed}/{evaluated}"
     );
 }
+
+/// REQ-ALM-005..008.
+#[test]
+fn alarm_detection() {
+    use iron_domain::alarm::{AlarmDef, Condition, Detector};
+    let doc = load("alarms.yaml");
+    let cases = doc["cases"].as_array().unwrap();
+    assert!(cases.len() >= 9);
+    let ms = |j: &J| (j.as_f64().unwrap_or(0.0) * 1000.0).round() as i64;
+    for case in cases {
+        let (name, a) = (label(case), &case["alarm"]);
+        let condition = match a["state"].as_bool() {
+            Some(state) => Condition::State(state),
+            None => {
+                AlarmDef::level(a["name"].as_str().unwrap(), a["limit"].as_f64().unwrap()).unwrap()
+            }
+        };
+        let def = AlarmDef {
+            condition,
+            deadband: a["deadband"].as_f64().unwrap_or(0.0),
+            on_delay_ms: ms(&a["on_delay"]),
+            off_delay_ms: ms(&a["off_delay"]),
+        };
+        let mut detector = Detector::default();
+        for step in case["steps"].as_array().unwrap() {
+            let t = ms(&step["t"]);
+            let transition = if step["poll"].as_bool() == Some(true) {
+                detector.poll(&def, t)
+            } else {
+                detector.update(&def, t, value(&step["value"]), quality(&step["quality"]))
+            };
+            assert_eq!(
+                detector.active,
+                step["active"].as_bool().unwrap(),
+                "{name}: step {step}"
+            );
+            if !step["transition_at"].is_null() {
+                assert_eq!(
+                    transition.map(|x| x.t_ms),
+                    Some(ms(&step["transition_at"])),
+                    "{name}: step {step}"
+                );
+            }
+        }
+    }
+}

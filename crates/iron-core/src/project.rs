@@ -1,4 +1,4 @@
-//! Reading a project from disk.
+//! Reading a project from disk: `config/` and `test/sim/scenarios/`.
 
 use crate::validate::Files;
 use std::io;
@@ -16,6 +16,10 @@ pub fn load(root: &Path) -> io::Result<Files> {
     }
     let mut files = Files::new();
     walk(root, &root.join("config"), &mut files)?;
+    let scenarios = root.join("test/sim/scenarios");
+    if scenarios.is_dir() {
+        walk(root, &scenarios, &mut files)?;
+    }
     Ok(files)
 }
 

@@ -12,6 +12,7 @@ first implementation is written against.
 | `expressions.yaml` | Expression + inputs → value and quality | [expressions](../docs/specs/expressions.md) |
 | `decode.yaml` | Registers → values; raw → engineering units | [protocol-drivers](../docs/specs/protocol-drivers.md), [tag-model](../docs/specs/tag-model.md) |
 | `publish.yaml` | Sample sequence → publish or not | [edge-agent](../docs/specs/edge-agent.md) |
+| `alarms.yaml` | Sample sequence → alarm active or not: limits, hysteresis, delays, quality | [alarm-engine](../docs/specs/alarm-engine.md) |
 | `commands.yaml` | Command + edge state → accepted or rejected | [command-path](../docs/specs/command-path.md) |
 
 Rules:

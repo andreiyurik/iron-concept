@@ -1,5 +1,6 @@
 //! IRON's pure domain logic. No I/O, no async, no dependencies.
 
+pub mod alarm;
 pub mod decode;
 pub mod expr;
 pub mod publish;

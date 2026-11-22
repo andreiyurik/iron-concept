@@ -142,3 +142,16 @@ cases:
     expect:
       - { severity: error, path: a.x, requirement: REQ-CFG-005 }
       - { severity: error, path: a.y, requirement: REQ-CFG-005 }
+
+  - name: a numeric alarm must be named for its direction
+    files:
+      config/tags/a.yaml: |
+        a:
+          temp:
+            source: "modbus://10.0.0.5/holding/0"
+            type: float32
+            unit: "°C"
+            range: [0, 200]
+            alarms: { too_hot: { limit: 180, priority: 2, message: m } }
+    expect:
+      - { severity: error, path: a.temp.alarms.too_hot, requirement: REQ-ALM-004 }

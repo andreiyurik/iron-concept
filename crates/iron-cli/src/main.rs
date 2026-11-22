@@ -9,6 +9,7 @@ iron — industrial automation as text in Git
 
 Usage:
   iron validate [DIR] [--json]   check every spec against its invariants
+  iron test --sim [DIR] [--json] run every simulation scenario
   iron version                   print the version
   iron help                      print this text
 
@@ -19,6 +20,7 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
         Some("validate") => validate(&args[1..]),
+        Some("test") => test(&args[1..]),
         Some("version" | "--version" | "-V") => {
             println!("iron {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
@@ -111,5 +113,69 @@ fn print_human(report: &Report) {
             plural(errors, "error"),
             plural(warnings, "warning")
         );
+    }
+}
+
+fn test(args: &[String]) -> ExitCode {
+    let (mut json, mut sim) = (false, false);
+    let mut dir: Option<PathBuf> = None;
+    for arg in args {
+        match arg.as_str() {
+            "--json" => json = true,
+            "--sim" => sim = true,
+            flag if flag.starts_with('-') => {
+                return usage_error(&format!("unknown option '{flag}'"))
+            }
+            path if dir.is_none() => dir = Some(PathBuf::from(path)),
+            _ => return usage_error("test takes one directory"),
+        }
+    }
+    if !sim {
+        return usage_error("only `iron test --sim` is implemented");
+    }
+    let files = match iron_core::project::load(&dir.unwrap_or_else(|| PathBuf::from("."))) {
+        Ok(files) => files,
+        Err(e) => {
+            eprintln!("iron: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let report = iron_core::validate(&files);
+    if !report.is_valid() {
+        if json {
+            let mut doc = serde_json::to_value(&report).unwrap_or_default();
+            doc["status"] = "invalid".into();
+            println!("{doc:#}");
+        } else {
+            print_human(&report);
+            println!("scenarios not run: the project is invalid");
+        }
+        return ExitCode::from(1);
+    }
+    let outcomes = iron_core::sim::run_all(&files, &iron_core::model::build(&files));
+    let failed = outcomes.iter().filter(|o| !o.passed).count();
+    if json {
+        let status = if failed == 0 { "ok" } else { "failed" };
+        println!(
+            "{:#}",
+            serde_json::json!({ "status": status, "scenarios": outcomes })
+        );
+    } else {
+        for o in &outcomes {
+            println!("{} {}", if o.passed { "✅" } else { "❌" }, o.name);
+            for f in &o.failures {
+                println!("   {f}");
+            }
+        }
+        match (outcomes.len(), failed) {
+            (0, _) => println!("no scenarios in test/sim/scenarios/"),
+            (n, 0) => println!("{n} passed"),
+            (n, f) => println!("{} passed, {f} failed", n - f),
+        }
+    }
+    if failed == 0 {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
     }
 }
