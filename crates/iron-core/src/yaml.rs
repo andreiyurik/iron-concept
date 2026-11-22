@@ -111,6 +111,14 @@ impl Node {
         value.is_finite().then_some((value * scale) as i64)
     }
 
+    fn scalars(&self, out: &mut Vec<Span>) {
+        match &self.kind {
+            Kind::Scalar { .. } => out.push(self.span),
+            Kind::Seq(items) => items.iter().for_each(|n| n.scalars(out)),
+            Kind::Map(entries) => entries.iter().for_each(|e| e.value.scalars(out)),
+        }
+    }
+
     fn path_at(&self, offset: usize, prefix: &str) -> String {
         for e in self.entries().unwrap_or_default() {
             if (e.key_span.start..e.value.span.end.max(e.key_span.end)).contains(&offset) {
@@ -146,6 +154,11 @@ pub fn parse(src: &str) -> (Option<Node>, Vec<Problem>) {
         return (None, problems);
     };
     let node = map(src, &root, span_of(&root.byte_range()), "", &mut problems);
+    // The scanner reads lines, not YAML: an indicator strictly inside a scalar
+    // (after a comma in plain text, on the next line of a long string) is text.
+    let mut scalars = Vec::new();
+    node.scalars(&mut scalars);
+    problems.retain(|p| !scalars.iter().any(|s| s.start < p.span.start && p.span.start < s.end));
     for p in problems.iter_mut().filter(|p| p.path.is_empty()) {
         p.path = node.path_at(p.span.start, "");
     }
@@ -184,13 +197,16 @@ fn lexical(src: &str) -> Vec<Problem> {
             } else if c == b'#' && (i == indent || bytes[i - 1] == b' ') {
                 break;
             } else if start && c != b' ' {
-                let rest = body[i..].split(" #").next().unwrap_or("").trim_end();
+                let block = || {
+                    let rest = body[i..].split(" #").next().unwrap_or("").trim_end();
+                    rest.len() <= 3 && rest[1..].bytes().all(|b| b"+-0123456789".contains(&b))
+                };
                 match c {
                     b'&' => flag(i, "anchors are outside IRON's YAML subset", false),
                     b'*' => flag(i, "aliases are outside IRON's YAML subset", false),
                     b'!' => flag(i, "tags are outside IRON's YAML subset", false),
                     b'?' if next_blank => flag(i, "complex keys are outside IRON's YAML subset", false),
-                    b'|' | b'>' if rest.len() <= 3 && rest[1..].bytes().all(|b| b"+-0123456789".contains(&b)) => {
+                    b'|' | b'>' if block() => {
                         flag(i, "block scalars are outside IRON's YAML subset", false);
                     }
                     _ => {}
@@ -338,7 +354,7 @@ mod tests {
             let hit = problems.iter().find(|p| p.message.contains(needle));
             assert_eq!(hit.map(|p| p.path.as_str()), Some(path), "{src:?}: {problems:?}");
         }
-        let ok = "a:\n  u: \"modbus://h/x?a=1&b=2\"\n  m: \"*not an alias*\"\n  n: a > b\n  k: 5 # &c\n";
+        let ok = "a:\n  u: \"modbus://h/x?a=1&b=2\"\n  m: \"*not an alias*\"\n  n: a > b\n  k: 5 # &c\n  d: hello, !world\n  e: see [1], *note\n  f: a {b}, &c\n  g: \"Tank high\n    & check *now*\"\n  h: Tank high\n    *now* & check\n";
         assert_eq!(parse(ok).1, vec![]);
     }
 }

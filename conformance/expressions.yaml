@@ -62,6 +62,10 @@ expansion:
     template: "x.y * -{k}"
     params: { k: -5 }
     expect: "x.y * -(-5)"
+  - name: negative zero is negative too
+    template: "x.y * -{k}"
+    params: { k: -0.0 }
+    expect: "x.y * -(-0.0)"
   - name: a non-integer address is rejected
     requirement: REQ-EXP-004
     template: "modbus://{plc}/holding/{base + 0.5}"

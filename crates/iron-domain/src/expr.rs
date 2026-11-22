@@ -604,7 +604,7 @@ pub fn expand(template: &str, params: &dyn Fn(&str) -> Option<Param>) -> Result<
         if !int && !text.contains('.') {
             text.push_str(".0");
         }
-        out.push_str(&if value < 0.0 { format!("({text})") } else { text });
+        out.push_str(&if value.is_sign_negative() { format!("({text})") } else { text });
         sole = Some(Param::Number { value, int });
     }
     out.push_str(rest);
